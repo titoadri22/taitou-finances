@@ -57,7 +57,7 @@ function showApp() {
   document.getElementById('userName').textContent = currentUser.name;
   document.getElementById('userEmail').textContent = currentUser.email;
   var avatar = document.getElementById('userAvatar');
-  avatar.textContent = currentUser.name.charAt(0).toUpperCase();
+  avatar.textContent = currentUser.avatar_emoji || currentUser.name.charAt(0).toUpperCase();
   avatar.style.background = currentUser.avatar_color || '#818cf8';
 
   document.getElementById('dashGreeting').textContent = '¡Hola, ' + currentUser.name.split(' ')[0] + '! Aquí tienes tu resumen.';
@@ -186,13 +186,84 @@ async function handleLogout() {
 }
 
 // ─── PROFILE ──────────────────────────────────────
+var selectedProfileColor = '#818cf8';
+var selectedProfileEmoji = '';
+
 function openProfileModal() {
   document.getElementById('profileName').value = currentUser.name;
   document.getElementById('profileEmail').value = currentUser.email;
   document.getElementById('profileCurrentPw').value = '';
   document.getElementById('profileNewPw').value = '';
   document.getElementById('profileError').textContent = '';
+
+  selectedProfileColor = currentUser.avatar_color || '#818cf8';
+  selectedProfileEmoji = currentUser.avatar_emoji || '';
+
+  // Update hero preview
+  var avatar = document.getElementById('profileAvatarPreview');
+  avatar.style.background = selectedProfileColor;
+  avatar.textContent = selectedProfileEmoji || currentUser.name.charAt(0).toUpperCase();
+  document.getElementById('profileHeroName').textContent = currentUser.name;
+  document.getElementById('profileHeroEmail').textContent = currentUser.email;
+
+  // Set active color
+  document.querySelectorAll('.profile-color-btn').forEach(function(btn) {
+    btn.classList.toggle('active', btn.dataset.color === selectedProfileColor);
+  });
+
+  // Set active emoji
+  document.querySelectorAll('.profile-emoji-btn').forEach(function(btn) {
+    btn.classList.toggle('active', btn.dataset.emoji === selectedProfileEmoji);
+  });
+
+  // Set active currency
+  var cur = currentUser.currency || 'EUR';
+  document.querySelectorAll('.profile-currency-opt').forEach(function(opt) {
+    var input = opt.querySelector('input');
+    var isActive = opt.dataset.cur === cur;
+    opt.classList.toggle('active', isActive);
+    input.checked = isActive;
+  });
+
+  // Add currency click handlers
+  document.querySelectorAll('.profile-currency-opt').forEach(function(opt) {
+    opt.onclick = function() {
+      document.querySelectorAll('.profile-currency-opt').forEach(function(o) { o.classList.remove('active'); });
+      opt.classList.add('active');
+      opt.querySelector('input').checked = true;
+    };
+  });
+
   openModal('profileModal');
+}
+
+function selectProfileColor(color) {
+  selectedProfileColor = color;
+  document.querySelectorAll('.profile-color-btn').forEach(function(btn) {
+    btn.classList.toggle('active', btn.dataset.color === color);
+  });
+  var avatar = document.getElementById('profileAvatarPreview');
+  avatar.style.background = color;
+}
+
+function selectProfileEmoji(emoji) {
+  selectedProfileEmoji = emoji;
+  document.querySelectorAll('.profile-emoji-btn').forEach(function(btn) {
+    btn.classList.toggle('active', btn.dataset.emoji === emoji);
+  });
+  var avatar = document.getElementById('profileAvatarPreview');
+  var name = document.getElementById('profileName').value.trim();
+  avatar.textContent = emoji || (name ? name.charAt(0).toUpperCase() : 'U');
+}
+
+function updateProfilePreview() {
+  var name = document.getElementById('profileName').value.trim();
+  var email = document.getElementById('profileEmail').value.trim();
+  document.getElementById('profileHeroName').textContent = name || 'Usuario';
+  document.getElementById('profileHeroEmail').textContent = email || 'correo@email.com';
+  if (!selectedProfileEmoji) {
+    document.getElementById('profileAvatarPreview').textContent = name ? name.charAt(0).toUpperCase() : 'U';
+  }
 }
 
 async function saveProfile() {
@@ -205,7 +276,17 @@ async function saveProfile() {
 
   if (!name || !email) { errEl.textContent = 'Nombre y correo son obligatorios'; return; }
 
-  var body = { name: name, email: email };
+  var selectedCurrency = 'EUR';
+  var checkedRadio = document.querySelector('input[name="profileCurrency"]:checked');
+  if (checkedRadio) selectedCurrency = checkedRadio.value;
+
+  var body = {
+    name: name,
+    email: email,
+    avatar_color: selectedProfileColor,
+    avatar_emoji: selectedProfileEmoji,
+    currency: selectedCurrency
+  };
   if (currentPw && newPw) {
     body.current_password = currentPw;
     body.new_password = newPw;
@@ -221,11 +302,22 @@ async function saveProfile() {
     if (data.success) {
       currentUser.name = name;
       currentUser.email = email;
+      currentUser.avatar_color = selectedProfileColor;
+      currentUser.avatar_emoji = selectedProfileEmoji;
+      currentUser.currency = selectedCurrency;
+
+      // Update sidebar
       document.getElementById('userName').textContent = name;
       document.getElementById('userEmail').textContent = email;
-      document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
+      var sidebarAvatar = document.getElementById('userAvatar');
+      sidebarAvatar.textContent = selectedProfileEmoji || name.charAt(0).toUpperCase();
+      sidebarAvatar.style.background = selectedProfileColor;
+
+      // Update greeting
+      document.getElementById('dashGreeting').textContent = '¡Hola, ' + name.split(' ')[0] + '! Aquí tienes tu resumen.';
+
       closeModal('profileModal');
-      toast('Perfil actualizado');
+      toast('✨ Perfil actualizado');
     } else {
       errEl.textContent = data.error || 'Error al guardar';
     }
@@ -270,7 +362,10 @@ async function api(url, method, body) {
 }
 function formatMoney(amount) {
   var n = parseFloat(amount) || 0;
-  return '€' + Math.abs(n).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  var symbols = { EUR: '€', USD: '$', GBP: '£', MXN: '$', ARS: '$', COP: '$' };
+  var cur = (currentUser && currentUser.currency) || 'EUR';
+  var sym = symbols[cur] || '€';
+  return sym + Math.abs(n).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 function formatDate(dateStr) {
   var d = new Date(dateStr + 'T00:00:00');

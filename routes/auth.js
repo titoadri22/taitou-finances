@@ -82,7 +82,7 @@ module.exports = function(db, seedUserDefaults) {
 
       res.json({
         success: true,
-        user: { id: user.id, name: user.name, email: user.email, avatar_color: user.avatar_color, is_onboarded: user.is_onboarded || 0, is_admin: user.is_admin === 1 }
+        user: { id: user.id, name: user.name, email: user.email, avatar_color: user.avatar_color, avatar_emoji: user.avatar_emoji || '', currency: user.currency || 'EUR', is_onboarded: user.is_onboarded || 0, is_admin: user.is_admin === 1 }
       });
     } catch (err) {
       res.status(500).json({ error: err.message });
@@ -99,16 +99,19 @@ module.exports = function(db, seedUserDefaults) {
   // ─── CHECK SESSION ────────────────────────────────
   router.get('/me', (req, res) => {
     if (req.session && req.session.userId) {
-      const user = db.prepare('SELECT is_onboarded, is_admin FROM users WHERE id = ?').get(req.session.userId);
+      const user = db.prepare('SELECT name, email, avatar_color, avatar_emoji, currency, is_onboarded, is_admin FROM users WHERE id = ?').get(req.session.userId);
+      if (!user) return res.json({ authenticated: false });
       res.json({
         authenticated: true,
         user: {
           id: req.session.userId,
-          name: req.session.userName,
-          email: req.session.userEmail,
-          avatar_color: req.session.avatarColor,
-          is_onboarded: (user && user.is_onboarded) || 0,
-          is_admin: (user && user.is_admin) === 1
+          name: user.name,
+          email: user.email,
+          avatar_color: user.avatar_color || '#818cf8',
+          avatar_emoji: user.avatar_emoji || '',
+          currency: user.currency || 'EUR',
+          is_onboarded: user.is_onboarded || 0,
+          is_admin: user.is_admin === 1
         }
       });
     } else {
@@ -123,28 +126,32 @@ module.exports = function(db, seedUserDefaults) {
         return res.status(401).json({ error: 'No autenticado' });
       }
 
-      const { name, email, current_password, new_password } = req.body;
+      const { name, email, avatar_color, avatar_emoji, currency, current_password, new_password } = req.body;
       const userId = req.session.userId;
 
-      // Update name/email
-      if (name || email) {
-        const updates = [];
-        const params = [];
-        if (name) { updates.push('name = ?'); params.push(name.trim()); }
-        if (email) {
-          // Check email not taken by another user
-          const existing = db.prepare('SELECT id FROM users WHERE email = ? AND id != ?').get(email.toLowerCase().trim(), userId);
-          if (existing) {
-            return res.status(400).json({ error: 'Ese correo ya está en uso' });
-          }
-          updates.push('email = ?');
-          params.push(email.toLowerCase().trim());
+      // Build dynamic update
+      const updates = [];
+      const params = [];
+
+      if (name) { updates.push('name = ?'); params.push(name.trim()); }
+      if (email) {
+        const existing = db.prepare('SELECT id FROM users WHERE email = ? AND id != ?').get(email.toLowerCase().trim(), userId);
+        if (existing) {
+          return res.status(400).json({ error: 'Ese correo ya está en uso' });
         }
+        updates.push('email = ?');
+        params.push(email.toLowerCase().trim());
+      }
+      if (avatar_color) { updates.push('avatar_color = ?'); params.push(avatar_color); }
+      if (avatar_emoji !== undefined) { updates.push('avatar_emoji = ?'); params.push(avatar_emoji); }
+      if (currency) { updates.push('currency = ?'); params.push(currency); }
+
+      if (updates.length > 0) {
         params.push(userId);
         db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).run(...params);
-
         if (name) req.session.userName = name.trim();
         if (email) req.session.userEmail = email.toLowerCase().trim();
+        if (avatar_color) req.session.avatarColor = avatar_color;
       }
 
       // Change password

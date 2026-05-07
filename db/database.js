@@ -192,6 +192,18 @@ function initDB() {
     db.prepare("INSERT OR IGNORE INTO _migrations (name) VALUES ('add_is_admin')").run();
   }
 
+  // Migration: add avatar_emoji and currency to users
+  const migProfileDone = db.prepare("SELECT 1 FROM _migrations WHERE name = 'add_profile_fields'").get();
+  if (!migProfileDone) {
+    try {
+      db.exec("ALTER TABLE users ADD COLUMN avatar_emoji TEXT DEFAULT ''");
+    } catch(e) { /* column may already exist */ }
+    try {
+      db.exec("ALTER TABLE users ADD COLUMN currency TEXT DEFAULT 'EUR'");
+    } catch(e) { /* column may already exist */ }
+    db.prepare("INSERT OR IGNORE INTO _migrations (name) VALUES ('add_profile_fields')").run();
+  }
+
   // Ensure admin user exists
   const adminExists = db.prepare("SELECT id FROM users WHERE name = 'admin' OR email = 'admin@admin.com'").get();
   if (!adminExists) {

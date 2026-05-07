@@ -1155,30 +1155,112 @@
 
   <!-- Profile Modal -->
   <div class="modal-overlay" id="profileModal">
-    <div class="modal">
+    <div class="modal" style="max-width:560px;">
       <div class="modal-header">
-        <h3>👤 Mi perfil</h3><button class="modal-close" onclick="closeModal('profileModal')">✕</button>
+        <h3>⚙️ Mi Perfil</h3><button class="modal-close" onclick="closeModal('profileModal')">✕</button>
       </div>
-      <div class="modal-body">
-        <div class="form-group"><label class="form-label">Nombre</label><input type="text" class="form-input"
-            id="profileName"></div>
-        <div class="form-group"><label class="form-label">Correo electrónico</label><input type="email"
-            class="form-input" id="profileEmail"></div>
-        <div style="border-top:1px solid var(--border);margin:20px 0;padding-top:20px;">
-          <h4 style="font-size:0.9rem;margin-bottom:14px;color:var(--text-secondary);">Cambiar contraseña</h4>
-          <div class="form-group"><label class="form-label">Contraseña actual</label><input type="password"
-              class="form-input" id="profileCurrentPw" placeholder="Dejar vacío para no cambiar"></div>
-          <div class="form-group"><label class="form-label">Nueva contraseña</label><input type="password"
-              class="form-input" id="profileNewPw" placeholder="Mínimo 6 caracteres"></div>
+      <div class="modal-body" style="padding:0;">
+
+        <!-- Avatar Preview Section -->
+        <div class="profile-hero" id="profileHero">
+          <div class="profile-avatar-lg" id="profileAvatarPreview">U</div>
+          <div class="profile-hero-name" id="profileHeroName">Usuario</div>
+          <div class="profile-hero-email" id="profileHeroEmail">correo@email.com</div>
         </div>
-        <div id="profileError" class="auth-error"></div>
-        <div style="border-top:1px solid var(--border);margin:20px 0;padding-top:20px;">
-          <button class="btn btn-danger" onclick="handleLogout()">🚪 Cerrar sesión</button>
+
+        <div style="padding:24px;">
+          <!-- Avatar Personalization -->
+          <div class="profile-section">
+            <h4 class="profile-section-title">🎨 Personalización</h4>
+
+            <div class="form-group">
+              <label class="form-label">Color del avatar</label>
+              <div class="profile-color-grid" id="profileColorGrid">
+                <button class="profile-color-btn" data-color="#818cf8" style="background:#818cf8;" onclick="selectProfileColor('#818cf8')"></button>
+                <button class="profile-color-btn" data-color="#f472b6" style="background:#f472b6;" onclick="selectProfileColor('#f472b6')"></button>
+                <button class="profile-color-btn" data-color="#34d399" style="background:#34d399;" onclick="selectProfileColor('#34d399')"></button>
+                <button class="profile-color-btn" data-color="#fbbf24" style="background:#fbbf24;" onclick="selectProfileColor('#fbbf24')"></button>
+                <button class="profile-color-btn" data-color="#f87171" style="background:#f87171;" onclick="selectProfileColor('#f87171')"></button>
+                <button class="profile-color-btn" data-color="#06b6d4" style="background:#06b6d4;" onclick="selectProfileColor('#06b6d4')"></button>
+                <button class="profile-color-btn" data-color="#a78bfa" style="background:#a78bfa;" onclick="selectProfileColor('#a78bfa')"></button>
+                <button class="profile-color-btn" data-color="#fb923c" style="background:#fb923c;" onclick="selectProfileColor('#fb923c')"></button>
+                <button class="profile-color-btn" data-color="#14b8a6" style="background:#14b8a6;" onclick="selectProfileColor('#14b8a6')"></button>
+                <button class="profile-color-btn" data-color="#e879f9" style="background:#e879f9;" onclick="selectProfileColor('#e879f9')"></button>
+                <button class="profile-color-btn" data-color="#ef4444" style="background:#ef4444;" onclick="selectProfileColor('#ef4444')"></button>
+                <button class="profile-color-btn" data-color="#3b82f6" style="background:#3b82f6;" onclick="selectProfileColor('#3b82f6')"></button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Emoji del avatar (opcional)</label>
+              <div class="profile-emoji-grid" id="profileEmojiGrid">
+                <button class="profile-emoji-btn" data-emoji="" onclick="selectProfileEmoji('')" title="Usar inicial del nombre">✖️</button>
+                <button class="profile-emoji-btn" data-emoji="😎" onclick="selectProfileEmoji('😎')">😎</button>
+                <button class="profile-emoji-btn" data-emoji="🦊" onclick="selectProfileEmoji('🦊')">🦊</button>
+                <button class="profile-emoji-btn" data-emoji="🐱" onclick="selectProfileEmoji('🐱')">🐱</button>
+                <button class="profile-emoji-btn" data-emoji="🚀" onclick="selectProfileEmoji('🚀')">🚀</button>
+                <button class="profile-emoji-btn" data-emoji="💎" onclick="selectProfileEmoji('💎')">💎</button>
+                <button class="profile-emoji-btn" data-emoji="🎯" onclick="selectProfileEmoji('🎯')">🎯</button>
+                <button class="profile-emoji-btn" data-emoji="⭐" onclick="selectProfileEmoji('⭐')">⭐</button>
+                <button class="profile-emoji-btn" data-emoji="🔥" onclick="selectProfileEmoji('🔥')">🔥</button>
+                <button class="profile-emoji-btn" data-emoji="🌊" onclick="selectProfileEmoji('🌊')">🌊</button>
+                <button class="profile-emoji-btn" data-emoji="🎸" onclick="selectProfileEmoji('🎸')">🎸</button>
+                <button class="profile-emoji-btn" data-emoji="🏆" onclick="selectProfileEmoji('🏆')">🏆</button>
+                <button class="profile-emoji-btn" data-emoji="🦁" onclick="selectProfileEmoji('🦁')">🦁</button>
+                <button class="profile-emoji-btn" data-emoji="🌟" onclick="selectProfileEmoji('🌟')">🌟</button>
+                <button class="profile-emoji-btn" data-emoji="🎭" onclick="selectProfileEmoji('🎭')">🎭</button>
+                <button class="profile-emoji-btn" data-emoji="🧠" onclick="selectProfileEmoji('🧠')">🧠</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Account Info -->
+          <div class="profile-section">
+            <h4 class="profile-section-title">👤 Datos de la cuenta</h4>
+            <div class="form-group"><label class="form-label">Nombre</label><input type="text" class="form-input"
+                id="profileName" oninput="updateProfilePreview()"></div>
+            <div class="form-group"><label class="form-label">Correo electrónico</label><input type="email"
+                class="form-input" id="profileEmail" oninput="updateProfilePreview()"></div>
+          </div>
+
+          <!-- Currency Preference -->
+          <div class="profile-section">
+            <h4 class="profile-section-title">💱 Moneda preferida</h4>
+            <div class="form-group">
+              <div class="profile-currency-grid">
+                <label class="profile-currency-opt" data-cur="EUR"><input type="radio" name="profileCurrency" value="EUR" hidden><span class="cur-flag">🇪🇺</span><span class="cur-code">EUR</span></label>
+                <label class="profile-currency-opt" data-cur="USD"><input type="radio" name="profileCurrency" value="USD" hidden><span class="cur-flag">🇺🇸</span><span class="cur-code">USD</span></label>
+                <label class="profile-currency-opt" data-cur="GBP"><input type="radio" name="profileCurrency" value="GBP" hidden><span class="cur-flag">🇬🇧</span><span class="cur-code">GBP</span></label>
+                <label class="profile-currency-opt" data-cur="MXN"><input type="radio" name="profileCurrency" value="MXN" hidden><span class="cur-flag">🇲🇽</span><span class="cur-code">MXN</span></label>
+                <label class="profile-currency-opt" data-cur="ARS"><input type="radio" name="profileCurrency" value="ARS" hidden><span class="cur-flag">🇦🇷</span><span class="cur-code">ARS</span></label>
+                <label class="profile-currency-opt" data-cur="COP"><input type="radio" name="profileCurrency" value="COP" hidden><span class="cur-flag">🇨🇴</span><span class="cur-code">COP</span></label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Password Change -->
+          <div class="profile-section">
+            <h4 class="profile-section-title">🔒 Cambiar contraseña</h4>
+            <div class="form-group"><label class="form-label">Contraseña actual</label><input type="password"
+                class="form-input" id="profileCurrentPw" placeholder="Dejar vacío para no cambiar"></div>
+            <div class="form-group"><label class="form-label">Nueva contraseña</label><input type="password"
+                class="form-input" id="profileNewPw" placeholder="Mínimo 6 caracteres"></div>
+          </div>
+
+          <div id="profileError" class="auth-error"></div>
+
+          <!-- Danger Zone -->
+          <div class="profile-section profile-danger-zone">
+            <h4 class="profile-section-title" style="color:var(--red);">⚠️ Zona de peligro</h4>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <button class="btn btn-danger" onclick="handleLogout()">🚪 Cerrar sesión</button>
+            </div>
+          </div>
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeModal('profileModal')">Cancelar</button>
-        <button class="btn btn-primary" onclick="saveProfile()">Guardar cambios</button>
+        <button class="btn btn-primary" onclick="saveProfile()">💾 Guardar cambios</button>
       </div>
     </div>
   </div>
