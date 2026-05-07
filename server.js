@@ -41,7 +41,7 @@ app.use(session({
 }));
 
 app.use(express.static(path.join(__dirname, 'public'), {
-  maxAge: '1d' // Cache de 1 día para archivos estáticos
+  maxAge: '7d' // Cache de 7 días para archivos estáticos
 }));
 
 const authRoutes = require('./routes/auth')(db, seedUserDefaults);

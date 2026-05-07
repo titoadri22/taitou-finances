@@ -3,6 +3,44 @@ const router = express.Router();
 
 module.exports = function (db) {
 
+  // ─── PRE-CACHED PREPARED STATEMENTS ─────────────────
+  const stmts = {
+    monthIncome: db.prepare(`SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE user_id = ? AND type = 'income' AND date BETWEEN ? AND ?`),
+    monthExpense: db.prepare(`SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE user_id = ? AND type = 'expense' AND date BETWEEN ? AND ?`),
+    byCategory: db.prepare(`SELECT c.name, c.icon, c.color, SUM(t.amount) as total FROM transactions t JOIN categories c ON t.category_id = c.id WHERE t.user_id = ? AND t.type = 'expense' AND t.date BETWEEN ? AND ? GROUP BY c.id ORDER BY total DESC`),
+    recentTx: db.prepare(`SELECT t.*, c.name as category_name, c.icon as category_icon, c.color as category_color, a.name as account_name, a.icon as account_icon FROM transactions t LEFT JOIN categories c ON t.category_id = c.id LEFT JOIN accounts a ON t.account_id = a.id WHERE t.user_id = ? ORDER BY t.date DESC, t.created_at DESC LIMIT 10`),
+    accounts: db.prepare('SELECT * FROM accounts WHERE user_id = ?'),
+    accountBalances: db.prepare(`
+      SELECT account_id, type,
+        COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as income,
+        COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as expense,
+        COALESCE(SUM(CASE WHEN type = 'transfer' THEN amount ELSE 0 END), 0) as transfer_out
+      FROM transactions WHERE user_id = ? GROUP BY account_id
+    `),
+    transfersIn: db.prepare(`
+      SELECT to_account_id, COALESCE(SUM(amount), 0) as total
+      FROM transactions WHERE user_id = ? AND type = 'transfer' AND to_account_id IS NOT NULL
+      GROUP BY to_account_id
+    `),
+    monthlyTrend: db.prepare(`
+      SELECT strftime('%Y-%m', date) as month,
+        COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as income,
+        COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as expense
+      FROM transactions WHERE user_id = ? AND date >= ? AND date <= ?
+      GROUP BY strftime('%Y-%m', date) ORDER BY month
+    `),
+    budgets: db.prepare(`SELECT b.*, c.name as category_name, c.icon as category_icon, c.color as category_color FROM budgets b JOIN categories c ON b.category_id = c.id WHERE b.user_id = ?`),
+    budgetSpent: db.prepare(`
+      SELECT category_id, COALESCE(SUM(amount), 0) as spent
+      FROM transactions WHERE user_id = ? AND type = 'expense' AND date BETWEEN ? AND ?
+      GROUP BY category_id
+    `),
+    // Accounts page
+    accountsOrdered: db.prepare('SELECT * FROM accounts WHERE user_id = ? ORDER BY name'),
+    // Transactions
+    txCount: db.prepare('SELECT COUNT(*) as c FROM transactions WHERE user_id = ?'),
+  };
+
   // Auth middleware - all API routes require login
   router.use((req, res, next) => {
     if (!req.session || !req.session.userId) {
@@ -12,7 +50,7 @@ module.exports = function (db) {
     next();
   });
 
-  // ─── DASHBOARD STATS ─────────────────────────────────
+  // ─── DASHBOARD STATS (OPTIMIZED) ─────────────────────
   router.get('/stats', (req, res) => {
     try {
       const uid = req.userId;
@@ -23,65 +61,51 @@ module.exports = function (db) {
       const startDate = `${y}-${m}-01`;
       const endDate = `${y}-${m}-31`;
 
-      const income = db.prepare(`
-        SELECT COALESCE(SUM(amount), 0) as total FROM transactions
-        WHERE user_id = ? AND type = 'income' AND date BETWEEN ? AND ?
-      `).get(uid, startDate, endDate);
+      const income = stmts.monthIncome.get(uid, startDate, endDate);
+      const expenses = stmts.monthExpense.get(uid, startDate, endDate);
+      const byCategory = stmts.byCategory.all(uid, startDate, endDate);
+      const recentTransactions = stmts.recentTx.all(uid);
 
-      const expenses = db.prepare(`
-        SELECT COALESCE(SUM(amount), 0) as total FROM transactions
-        WHERE user_id = ? AND type = 'expense' AND date BETWEEN ? AND ?
-      `).get(uid, startDate, endDate);
-
-      const byCategory = db.prepare(`
-        SELECT c.name, c.icon, c.color, SUM(t.amount) as total
-        FROM transactions t
-        JOIN categories c ON t.category_id = c.id
-        WHERE t.user_id = ? AND t.type = 'expense' AND t.date BETWEEN ? AND ?
-        GROUP BY c.id ORDER BY total DESC
-      `).all(uid, startDate, endDate);
-
-      const recentTransactions = db.prepare(`
-        SELECT t.*, c.name as category_name, c.icon as category_icon, c.color as category_color,
-               a.name as account_name, a.icon as account_icon
-        FROM transactions t
-        LEFT JOIN categories c ON t.category_id = c.id
-        LEFT JOIN accounts a ON t.account_id = a.id
-        WHERE t.user_id = ?
-        ORDER BY t.date DESC, t.created_at DESC LIMIT 10
-      `).all(uid);
-
-      const accounts = db.prepare('SELECT * FROM accounts WHERE user_id = ?').all(uid);
+      // Account balances in 2 queries instead of 4×N
+      const accounts = stmts.accounts.all(uid);
+      const balByAcc = {};
+      stmts.accountBalances.all(uid).forEach(r => {
+        if (!balByAcc[r.account_id]) balByAcc[r.account_id] = { income: 0, expense: 0, transfer_out: 0 };
+        balByAcc[r.account_id].income += r.income;
+        balByAcc[r.account_id].expense += r.expense;
+        balByAcc[r.account_id].transfer_out += r.transfer_out;
+      });
+      const tInMap = {};
+      stmts.transfersIn.all(uid).forEach(r => { tInMap[r.to_account_id] = r.total; });
       const accountBalances = accounts.map(acc => {
-        const incomeSum = db.prepare(`SELECT COALESCE(SUM(amount),0) as total FROM transactions WHERE user_id = ? AND account_id = ? AND type = 'income'`).get(uid, acc.id);
-        const expenseSum = db.prepare(`SELECT COALESCE(SUM(amount),0) as total FROM transactions WHERE user_id = ? AND account_id = ? AND type = 'expense'`).get(uid, acc.id);
-        const transfersIn = db.prepare(`SELECT COALESCE(SUM(amount),0) as total FROM transactions WHERE user_id = ? AND to_account_id = ? AND type = 'transfer'`).get(uid, acc.id);
-        const transfersOut = db.prepare(`SELECT COALESCE(SUM(amount),0) as total FROM transactions WHERE user_id = ? AND account_id = ? AND type = 'transfer'`).get(uid, acc.id);
-        return { ...acc, balance: acc.initial_balance + incomeSum.total - expenseSum.total + transfersIn.total - transfersOut.total };
+        const b = balByAcc[acc.id] || { income: 0, expense: 0, transfer_out: 0 };
+        const tIn = tInMap[acc.id] || 0;
+        return { ...acc, balance: acc.initial_balance + b.income - b.expense + tIn - b.transfer_out };
       });
 
+      // Monthly trend in 1 query instead of 12
+      const trendStart = new Date(y, parseInt(m) - 6, 1);
+      const trendStartStr = `${trendStart.getFullYear()}-${String(trendStart.getMonth() + 1).padStart(2, '0')}-01`;
+      const trendData = stmts.monthlyTrend.all(uid, trendStartStr, endDate);
+      const trendMap = {};
+      trendData.forEach(t => { trendMap[t.month] = t; });
       const monthlyTrend = [];
       for (let i = 5; i >= 0; i--) {
         const d = new Date(y, parseInt(m) - 1 - i, 1);
         const mm = String(d.getMonth() + 1).padStart(2, '0');
         const yy = d.getFullYear();
-        const s = `${yy}-${mm}-01`;
-        const e = `${yy}-${mm}-31`;
-        const inc = db.prepare(`SELECT COALESCE(SUM(amount),0) as t FROM transactions WHERE user_id = ? AND type='income' AND date BETWEEN ? AND ?`).get(uid, s, e);
-        const exp = db.prepare(`SELECT COALESCE(SUM(amount),0) as t FROM transactions WHERE user_id = ? AND type='expense' AND date BETWEEN ? AND ?`).get(uid, s, e);
-        monthlyTrend.push({ month: `${yy}-${mm}`, income: inc.t, expense: exp.t });
+        const key = `${yy}-${mm}`;
+        const t = trendMap[key] || { income: 0, expense: 0 };
+        monthlyTrend.push({ month: key, income: t.income, expense: t.expense });
       }
 
-      const budgets = db.prepare(`
-        SELECT b.*, c.name as category_name, c.icon as category_icon, c.color as category_color
-        FROM budgets b JOIN categories c ON b.category_id = c.id WHERE b.user_id = ?
-      `).all(uid);
+      // Budget progress in 1 query instead of N
+      const budgets = stmts.budgets.all(uid);
+      const spentByCategory = {};
+      stmts.budgetSpent.all(uid, startDate, endDate).forEach(r => { spentByCategory[r.category_id] = r.spent; });
       const budgetProgress = budgets.map(b => {
-        let spent = { t: 0 };
-        if (b.period === 'monthly') {
-          spent = db.prepare(`SELECT COALESCE(SUM(amount),0) as t FROM transactions WHERE user_id = ? AND category_id = ? AND type='expense' AND date BETWEEN ? AND ?`).get(uid, b.category_id, startDate, endDate);
-        }
-        return { ...b, spent: spent.t, percentage: b.amount > 0 ? Math.min((spent.t / b.amount) * 100, 100) : 0 };
+        const spent = b.period === 'monthly' ? (spentByCategory[b.category_id] || 0) : 0;
+        return { ...b, spent, percentage: b.amount > 0 ? Math.min((spent / b.amount) * 100, 100) : 0 };
       });
 
       res.json({
@@ -182,13 +206,20 @@ module.exports = function (db) {
   // ─── ACCOUNTS ─────────────────────────────────────────
   router.get('/accounts', (req, res) => {
     try {
-      const accounts = db.prepare('SELECT * FROM accounts WHERE user_id = ? ORDER BY name').all(req.userId);
+      const accounts = stmts.accountsOrdered.all(req.userId);
+      const balByAcc = {};
+      stmts.accountBalances.all(req.userId).forEach(r => {
+        if (!balByAcc[r.account_id]) balByAcc[r.account_id] = { income: 0, expense: 0, transfer_out: 0 };
+        balByAcc[r.account_id].income += r.income;
+        balByAcc[r.account_id].expense += r.expense;
+        balByAcc[r.account_id].transfer_out += r.transfer_out;
+      });
+      const tInMap = {};
+      stmts.transfersIn.all(req.userId).forEach(r => { tInMap[r.to_account_id] = r.total; });
       const result = accounts.map(acc => {
-        const inc = db.prepare(`SELECT COALESCE(SUM(amount),0) as t FROM transactions WHERE user_id = ? AND account_id=? AND type='income'`).get(req.userId, acc.id);
-        const exp = db.prepare(`SELECT COALESCE(SUM(amount),0) as t FROM transactions WHERE user_id = ? AND account_id=? AND type='expense'`).get(req.userId, acc.id);
-        const tin = db.prepare(`SELECT COALESCE(SUM(amount),0) as t FROM transactions WHERE user_id = ? AND to_account_id=? AND type='transfer'`).get(req.userId, acc.id);
-        const tout = db.prepare(`SELECT COALESCE(SUM(amount),0) as t FROM transactions WHERE user_id = ? AND account_id=? AND type='transfer'`).get(req.userId, acc.id);
-        return { ...acc, balance: acc.initial_balance + inc.t - exp.t + tin.t - tout.t };
+        const b = balByAcc[acc.id] || { income: 0, expense: 0, transfer_out: 0 };
+        const tIn = tInMap[acc.id] || 0;
+        return { ...acc, balance: acc.initial_balance + b.income - b.expense + tIn - b.transfer_out };
       });
       res.json(result);
     } catch (err) { res.status(500).json({ error: err.message }); }
