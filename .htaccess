@@ -1,0 +1,5 @@
+PassengerAppRoot /home/u768828736/domains/taitoufinances.es/public_html
+PassengerAppType node
+PassengerNodejs /opt/alt/alt-nodejs22/root/bin/node
+PassengerStartupFile server.js
+PassengerBaseURI /

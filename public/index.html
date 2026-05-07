@@ -1,0 +1,1831 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Taitou Finances — Control de Finanzas</title>
+
+  <!-- PWA Meta Tags -->
+  <meta name="description" content="Tu control financiero personal - Controla gastos, ingresos y ahorro">
+  <meta name="theme-color" content="#6366f1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Taitou">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/img/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/img/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/img/icon-512.png">
+
+  <link rel="stylesheet" href="/css/style.css?v=20260304a">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5103831236537652" crossorigin="anonymous"></script>
+</head>
+
+<body>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- AUTH SCREEN (Login / Register)         -->
+  <!-- ═══════════════════════════════════════ -->
+  <div id="authScreen" class="auth-screen">
+    <div class="auth-container">
+      <div class="auth-brand">
+        <div class="auth-logo">
+          <img src="/img/logo.png" alt="Taitou Finances" style="width:64px;height:64px;border-radius:12px;">
+        </div>
+        <h1>Taitou Finances</h1>
+        <p>Tu control financiero personal</p>
+      </div>
+
+      <!-- Login Form -->
+      <div id="loginForm" class="auth-form">
+        <h2>Iniciar sesión</h2>
+        <div class="form-group">
+          <label class="form-label">Correo electrónico</label>
+          <input type="email" class="form-input" id="loginEmail" placeholder="tu@correo.com" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <input type="password" class="form-input" id="loginPassword" placeholder="••••••••"
+            autocomplete="current-password">
+        </div>
+        <div id="loginError" class="auth-error"></div>
+        <button class="btn btn-primary btn-full" onclick="handleLogin()" id="loginBtn">Entrar</button>
+        <p class="auth-switch">¿No tienes cuenta? <a href="#" onclick="showRegister()">Crear cuenta</a></p>
+      </div>
+
+      <!-- Register Form -->
+      <div id="registerForm" class="auth-form" style="display:none;">
+        <h2>Crear cuenta</h2>
+        <div class="form-group">
+          <label class="form-label">Nombre</label>
+          <input type="text" class="form-input" id="regName" placeholder="Tu nombre" autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Correo electrónico</label>
+          <input type="email" class="form-input" id="regEmail" placeholder="tu@correo.com" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <input type="password" class="form-input" id="regPassword" placeholder="Mínimo 6 caracteres"
+            autocomplete="new-password">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirmar contraseña</label>
+          <input type="password" class="form-input" id="regPassword2" placeholder="Repite la contraseña"
+            autocomplete="new-password">
+        </div>
+        <div id="registerError" class="auth-error"></div>
+        <button class="btn btn-primary btn-full" onclick="handleRegister()" id="registerBtn">Crear cuenta</button>
+        <p class="auth-switch">¿Ya tienes cuenta? <a href="#" onclick="showLogin()">Iniciar sesión</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- ONBOARDING WIZARD                     -->
+  <!-- ═══════════════════════════════════════ -->
+  <div id="onboardingScreen" class="auth-screen" style="display:none;">
+    <div class="onboard-container">
+
+      <!-- Progress bar -->
+      <div class="onboard-progress">
+        <div class="onboard-progress-bar" id="onboardProgressBar" style="width:25%"></div>
+      </div>
+
+      <!-- Step 1: Welcome -->
+      <div class="onboard-step active" id="onboardStep1">
+        <div class="onboard-icon">👋</div>
+        <h2>¡Bienvenido/a a Taitou Finances!</h2>
+        <p class="onboard-desc">Vamos a configurar tu cuenta en unos segundos para que puedas empezar a controlar tus
+          finanzas.</p>
+
+        <div class="form-group" style="margin-top:28px;">
+          <label class="form-label">¿Cuál es tu moneda principal?</label>
+          <div class="onboard-currency-grid">
+            <label class="onboard-currency-option selected" data-currency="EUR">
+              <input type="radio" name="onboardCurrency" value="EUR" checked hidden>
+              <span class="onboard-currency-flag">🇪🇺</span>
+              <span class="onboard-currency-code">EUR</span>
+              <span class="onboard-currency-name">Euro</span>
+            </label>
+            <label class="onboard-currency-option" data-currency="USD">
+              <input type="radio" name="onboardCurrency" value="USD" hidden>
+              <span class="onboard-currency-flag">🇺🇸</span>
+              <span class="onboard-currency-code">USD</span>
+              <span class="onboard-currency-name">Dólar</span>
+            </label>
+            <label class="onboard-currency-option" data-currency="GBP">
+              <input type="radio" name="onboardCurrency" value="GBP" hidden>
+              <span class="onboard-currency-flag">🇬🇧</span>
+              <span class="onboard-currency-code">GBP</span>
+              <span class="onboard-currency-name">Libra</span>
+            </label>
+            <label class="onboard-currency-option" data-currency="MXN">
+              <input type="radio" name="onboardCurrency" value="MXN" hidden>
+              <span class="onboard-currency-flag">🇲🇽</span>
+              <span class="onboard-currency-code">MXN</span>
+              <span class="onboard-currency-name">Peso MX</span>
+            </label>
+            <label class="onboard-currency-option" data-currency="ARS">
+              <input type="radio" name="onboardCurrency" value="ARS" hidden>
+              <span class="onboard-currency-flag">🇦🇷</span>
+              <span class="onboard-currency-code">ARS</span>
+              <span class="onboard-currency-name">Peso AR</span>
+            </label>
+            <label class="onboard-currency-option" data-currency="COP">
+              <input type="radio" name="onboardCurrency" value="COP" hidden>
+              <span class="onboard-currency-flag">🇨🇴</span>
+              <span class="onboard-currency-code">COP</span>
+              <span class="onboard-currency-name">Peso CO</span>
+            </label>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-full" onclick="onboardNext(2)" style="margin-top:24px;">Continuar →</button>
+      </div>
+
+      <!-- Step 2: Main account -->
+      <div class="onboard-step" id="onboardStep2">
+        <div class="onboard-icon">🏦</div>
+        <h2>Tu cuenta principal</h2>
+        <p class="onboard-desc">Configura tu cuenta bancaria principal. Puedes añadir más cuentas después.</p>
+
+        <div class="form-group" style="margin-top:24px;">
+          <label class="form-label">Nombre de la cuenta</label>
+          <input type="text" class="form-input" id="onboardAccName1" value="Cuenta principal"
+            placeholder="Ej: BBVA, Santander, N26...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tipo de cuenta</label>
+          <select class="form-select" id="onboardAccType1">
+            <option value="bank">🏦 Cuenta bancaria</option>
+            <option value="cash">💵 Efectivo</option>
+            <option value="credit_card">💳 Tarjeta de crédito</option>
+            <option value="savings">🐷 Ahorros</option>
+            <option value="investment">📈 Inversión</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Saldo actual <span style="color:var(--text-muted);font-weight:400;">(lo que tienes
+              ahora mismo)</span></label>
+          <div style="position:relative;">
+            <span class="onboard-currency-symbol" id="onboardSymbol1">€</span>
+            <input type="number" class="form-input" id="onboardAccBalance1" step="0.01" placeholder="0.00"
+              style="padding-left:32px;font-family:var(--mono);font-size:1.1rem;">
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:24px;">
+          <button class="btn btn-secondary" onclick="onboardNext(1)" style="flex:1;">← Atrás</button>
+          <button class="btn btn-primary" onclick="onboardNext(3)" style="flex:2;">Continuar →</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Additional accounts -->
+      <div class="onboard-step" id="onboardStep3">
+        <div class="onboard-icon">💰</div>
+        <h2>¿Tienes más cuentas?</h2>
+        <p class="onboard-desc">Añade otras cuentas si quieres. Si no, puedes saltar este paso.</p>
+
+        <div id="onboardExtraAccounts" style="margin-top:20px;">
+          <div class="onboard-extra-acc" id="onboardExtra1">
+            <div class="form-row" style="gap:8px;">
+              <div class="form-group" style="flex:2;">
+                <label class="form-label">Nombre</label>
+                <input type="text" class="form-input" id="onboardAccName2" placeholder="Ej: Efectivo, Ahorros...">
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label class="form-label">Tipo</label>
+                <select class="form-select" id="onboardAccType2">
+                  <option value="cash">💵 Efectivo</option>
+                  <option value="bank">🏦 Banco</option>
+                  <option value="savings">🐷 Ahorros</option>
+                  <option value="credit_card">💳 Tarjeta</option>
+                  <option value="investment">📈 Inversión</option>
+                </select>
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label class="form-label">Saldo</label>
+                <input type="number" class="form-input" id="onboardAccBalance2" step="0.01" placeholder="0.00"
+                  style="font-family:var(--mono);">
+              </div>
+            </div>
+          </div>
+          <div class="onboard-extra-acc" id="onboardExtra2" style="display:none;">
+            <div class="form-row" style="gap:8px;">
+              <div class="form-group" style="flex:2;">
+                <label class="form-label">Nombre</label>
+                <input type="text" class="form-input" id="onboardAccName3" placeholder="Ej: Revolut, Bizum...">
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label class="form-label">Tipo</label>
+                <select class="form-select" id="onboardAccType3">
+                  <option value="bank">🏦 Banco</option>
+                  <option value="cash">💵 Efectivo</option>
+                  <option value="savings">🐷 Ahorros</option>
+                  <option value="credit_card">💳 Tarjeta</option>
+                  <option value="investment">📈 Inversión</option>
+                </select>
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label class="form-label">Saldo</label>
+                <input type="number" class="form-input" id="onboardAccBalance3" step="0.01" placeholder="0.00"
+                  style="font-family:var(--mono);">
+              </div>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="showExtraAccount()" id="addExtraAccBtn"
+          style="margin-top:8px;">+ Añadir otra cuenta</button>
+
+        <div style="display:flex;gap:10px;margin-top:24px;">
+          <button class="btn btn-secondary" onclick="onboardNext(2)" style="flex:1;">← Atrás</button>
+          <button class="btn btn-primary" onclick="onboardNext(4)" style="flex:2;">Continuar →</button>
+        </div>
+      </div>
+
+      <!-- Step 4: Summary & finish -->
+      <div class="onboard-step" id="onboardStep4">
+        <div class="onboard-icon">🚀</div>
+        <h2>¡Todo listo!</h2>
+        <p class="onboard-desc">Revisa tu configuración y empieza a controlar tus finanzas.</p>
+
+        <div class="onboard-summary" id="onboardSummary">
+          <!-- filled by JS -->
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:24px;">
+          <button class="btn btn-secondary" onclick="onboardNext(3)" style="flex:1;">← Atrás</button>
+          <button class="btn btn-primary" onclick="finishOnboarding()" id="onboardFinishBtn" style="flex:2;">🎉 Empezar
+            a usar Taitou</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- MAIN APP (hidden until authenticated)  -->
+  <!-- ═══════════════════════════════════════ -->
+  <div id="appScreen" style="display:none;">
+
+    <!-- Mobile Header -->
+    <div class="mobile-header">
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
+      <span style="font-weight:600;">Taitou Finances</span>
+    </div>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <div class="app">
+      <!-- Sidebar -->
+      <nav class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+          <div class="logo-icon">
+            <img src="/img/logo.png" alt="Logo" style="width:40px;height:40px;border-radius:8px;">
+          </div>
+          <div>
+            <h1>Taitou Finances</h1>
+            <span>Control financiero</span>
+          </div>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Principal</div>
+          <button class="nav-item active" data-page="dashboard" onclick="navigate('dashboard', this)">
+            <span class="nav-icon">📊</span> Dashboard
+          </button>
+          <button class="nav-item" data-page="transactions" onclick="navigate('transactions', this)">
+            <span class="nav-icon">💸</span> Transacciones
+          </button>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Gestión</div>
+          <button class="nav-item" data-page="accounts" onclick="navigate('accounts', this)">
+            <span class="nav-icon">🏦</span> Cuentas
+          </button>
+          <button class="nav-item" data-page="budgets" onclick="navigate('budgets', this)">
+            <span class="nav-icon">🎯</span> Presupuestos
+          </button>
+          <button class="nav-item" data-page="savings" onclick="navigate('savings', this)">
+            <span class="nav-icon">🐷</span> Ahorro
+          </button>
+          <button class="nav-item" data-page="goals" onclick="navigate('goals', this)">
+            <span class="nav-icon">✈️</span> Metas
+          </button>
+          <button class="nav-item" data-page="tasks" onclick="navigate('tasks', this)">
+            <span class="nav-icon">✅</span> Tareas
+          </button>
+          <button class="nav-item" data-page="debts" onclick="navigate('debts', this)">
+            <span class="nav-icon">💳</span> Deudas
+          </button>
+          <button class="nav-item" data-page="recap" onclick="navigate('recap', this)">
+            <span class="nav-icon">📊</span> Resumen
+          </button>
+          <button class="nav-item" data-page="categories" onclick="navigate('categories', this)">
+            <span class="nav-icon">🏷️</span> Categorías
+          </button>
+          <button class="nav-item" data-page="shortcuts" onclick="navigate('shortcuts', this)">
+            <span class="nav-icon">📱</span> Atajos iOS
+          </button>
+        </div>
+
+        <div class="nav-section" id="adminNavSection" style="display:none;">
+          <div class="nav-section-title">Administrador</div>
+          <button class="nav-item" data-page="admin" id="adminNavBtn" onclick="navigate('admin', this)" style="color: var(--red);">
+            <span class="nav-icon">👑</span> Gestión de Usuarios
+          </button>
+        </div>
+
+        <div style="margin-top:auto; padding-top:16px; border-top:1px solid var(--border);">
+          <a href="/api/export" class="nav-item" id="exportBtn" style="text-decoration:none;">
+            <span class="nav-icon">📥</span> Exportar CSV
+          </a>
+          <button class="nav-item" id="importBtn" onclick="openImportModal()">
+            <span class="nav-icon">📤</span> Importar CSV/Excel
+          </button>
+          <div class="sidebar-user" id="sidebarUser">
+            <div class="user-avatar" id="userAvatar">U</div>
+            <div class="user-info">
+              <div class="user-name" id="userName">Usuario</div>
+              <div class="user-email" id="userEmail">correo@email.com</div>
+            </div>
+            <button class="btn-icon" onclick="openProfileModal()" title="Perfil" style="flex-shrink:0;">⚙️</button>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Main Content -->
+      <main class="main-content">
+
+        <!-- DASHBOARD -->
+        <div class="page active" id="page-dashboard">
+          <div class="page-header">
+            <div>
+              <h2>Dashboard</h2>
+              <p class="subtitle" id="dashGreeting">Resumen de tus finanzas</p>
+            </div>
+            <div class="header-actions">
+              <div class="month-selector">
+                <input type="month" id="dashMonth" onchange="loadDashboard()">
+              </div>
+              <button class="btn btn-primary" onclick="openNewTransaction()">+ Nueva transacción</button>
+            </div>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card income animate-in delay-1">
+              <div class="stat-label">Ingresos</div>
+              <div class="stat-value" id="statIncome">€0</div>
+              <div class="stat-icon">📈</div>
+            </div>
+            <div class="stat-card expense animate-in delay-2">
+              <div class="stat-label">Gastos</div>
+              <div class="stat-value" id="statExpense">€0</div>
+              <div class="stat-icon">📉</div>
+            </div>
+            <div class="stat-card balance animate-in delay-3">
+              <div class="stat-label">Balance del mes</div>
+              <div class="stat-value" id="statBalance">€0</div>
+              <div class="stat-icon">⚖️</div>
+            </div>
+            <div class="stat-card total animate-in delay-4">
+              <div class="stat-label">Patrimonio total</div>
+              <div class="stat-value" id="statTotal">€0</div>
+              <div class="stat-icon">🏦</div>
+            </div>
+          </div>
+          <div class="grid-3">
+            <div>
+              <div class="panel">
+                <div class="panel-header">
+                  <h3>Evolución mensual</h3>
+                </div>
+                <div class="panel-body">
+                  <div class="chart-container"><canvas id="chartTrend"></canvas></div>
+                </div>
+              </div>
+              <div class="panel">
+                <div class="panel-header">
+                  <h3>Últimas transacciones</h3>
+                  <button class="btn btn-secondary btn-sm"
+                    onclick="navigate('transactions', document.querySelector('[data-page=transactions]'))">Ver
+                    todas</button>
+                </div>
+                <div class="panel-body no-pad">
+                  <div class="table-wrapper">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Fecha</th>
+                          <th>Descripción</th>
+                          <th>Categoría</th>
+                          <th>Monto</th>
+                        </tr>
+                      </thead>
+                      <tbody id="recentTable"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="panel">
+                <div class="panel-header">
+                  <h3>Gastos por categoría</h3>
+                </div>
+                <div class="panel-body">
+                  <div class="chart-container" style="height:200px;position:relative;"><canvas id="chartDonut"></canvas>
+                  </div>
+                  <div class="category-legend" id="categoryLegend"></div>
+                </div>
+              </div>
+              <div class="panel">
+                <div class="panel-header">
+                  <h3>Cuentas</h3>
+                </div>
+                <div class="panel-body" id="dashAccounts"></div>
+              </div>
+              <div class="panel">
+                <div class="panel-header">
+                  <h3>Presupuestos</h3>
+                </div>
+                <div class="panel-body" id="dashBudgets"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TRANSACTIONS -->
+        <div class="page" id="page-transactions">
+          <div class="page-header">
+            <div>
+              <h2>Transacciones</h2>
+              <p class="subtitle">Historial completo</p>
+            </div>
+            <div class="header-actions">
+              <button class="btn btn-secondary" onclick="openImportModal()">📤 Importar</button>
+              <button class="btn btn-primary" onclick="openNewTransaction()">+ Nueva transacción</button>
+            </div>
+          </div>
+          <div class="filters-bar">
+            <div class="search-input">
+              <input type="text" class="form-input" placeholder="Buscar..." id="searchInput" oninput="debounceSearch()">
+            </div>
+            <select class="form-select" id="filterType" onchange="loadTransactions()">
+              <option value="">Todos los tipos</option>
+              <option value="income">Ingresos</option>
+              <option value="expense">Gastos</option>
+              <option value="transfer">Transferencias</option>
+            </select>
+            <select class="form-select" id="filterCategory" onchange="loadTransactions()">
+              <option value="">Todas las categorías</option>
+            </select>
+            <select class="form-select" id="filterAccount" onchange="loadTransactions()">
+              <option value="">Todas las cuentas</option>
+            </select>
+            <input type="date" class="form-input" id="filterFrom" onchange="loadTransactions()" style="width:auto;">
+            <input type="date" class="form-input" id="filterTo" onchange="loadTransactions()" style="width:auto;">
+          </div>
+          <div class="panel">
+            <div class="panel-body no-pad">
+              <div class="table-wrapper" id="txTableWrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Tipo</th>
+                      <th>Descripción</th>
+                      <th>Categoría</th>
+                      <th>Cuenta</th>
+                      <th>Monto</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="transactionsTable"></tbody>
+                </table>
+              </div>
+              <div class="pagination" id="pagination"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ACCOUNTS -->
+        <div class="page" id="page-accounts">
+          <div class="page-header">
+            <div>
+              <h2>Cuentas</h2>
+              <p class="subtitle">Gestiona tus cuentas</p>
+            </div>
+            <button class="btn btn-primary" onclick="openAccountModal()">+ Nueva cuenta</button>
+          </div>
+          <div class="stats-grid" id="accountsList"></div>
+        </div>
+
+        <!-- BUDGETS -->
+        <div class="page" id="page-budgets">
+          <div class="page-header">
+            <div>
+              <h2>Presupuestos</h2>
+              <p class="subtitle">Control de gastos por categoría</p>
+            </div>
+            <button class="btn btn-primary" onclick="openBudgetModal()">+ Nuevo presupuesto</button>
+          </div>
+          <div class="panel">
+            <div class="panel-body" id="budgetsList"></div>
+          </div>
+        </div>
+
+        <!-- SAVINGS -->
+        <div class="page" id="page-savings">
+          <div class="page-header">
+            <div>
+              <h2>🐷 Plan de Ahorro</h2>
+              <p class="subtitle">Ahorra automáticamente según tus ingresos</p>
+            </div>
+            <button class="btn btn-primary" onclick="openSavingsPlanModal()">⚙️ Configurar</button>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card savings animate-in delay-1" style="grid-column: span 2;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div>
+                  <div class="stat-label">Tu hucha</div>
+                  <div class="stat-value" id="savingsBalance">€0</div>
+                </div>
+                <div style="text-align:right;">
+                  <div class="stat-label">Meta</div>
+                  <div class="stat-value" id="savingsGoalTarget" style="font-size:1.2rem;">€0</div>
+                </div>
+              </div>
+              <div id="savingsGoalProgress" style="margin-top:16px;">
+                <div class="budget-bar" style="height:10px;border-radius:5px;">
+                  <div class="budget-bar-fill" id="savingsProgressBar"
+                    style="background:linear-gradient(90deg,#f472b6,#ec4899);width:0%;"></div>
+                </div>
+                <div class="budget-values" style="margin-top:8px;">
+                  <span id="savingsProgressPct">0%</span>
+                  <span id="savingsProgressRemaining">Faltan €0</span>
+                </div>
+              </div>
+              <button class="btn btn-primary" onclick="openAddToHuchaModal()" style="margin-top:16px;width:100%;">💰
+                Añadir a la hucha</button>
+              <div class="stat-icon">🐷</div>
+            </div>
+            <div class="stat-card income animate-in delay-2">
+              <div class="stat-label">Ingresos promedio</div>
+              <div class="stat-value" id="avgIncome">€0</div>
+              <div class="stat-icon">📈</div>
+            </div>
+            <div class="stat-card expense animate-in delay-3">
+              <div class="stat-label">Gastos promedio</div>
+              <div class="stat-value" id="avgExpenses">€0</div>
+              <div class="stat-icon">📉</div>
+            </div>
+            <div class="stat-card balance animate-in delay-4">
+              <div class="stat-label">Podrías ahorrar</div>
+              <div class="stat-value" id="recommendedSavings">€0</div>
+              <div class="stat-icon">💡</div>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-header">
+                <h3>📊 Recomendación de ahorro</h3>
+              </div>
+              <div class="panel-body" id="savingsRecommendation">
+                <div class="empty-state">
+                  <p>Cargando...</p>
+                </div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-header">
+                <h3>💡 Consejos</h3>
+              </div>
+              <div class="panel-body">
+                <ul style="margin:0;padding-left:20px;color:var(--text-secondary);line-height:1.8;">
+                  <li>Intenta ahorrar al menos el <strong>20%</strong> de tus ingresos</li>
+                  <li>Automatiza tus ahorros con transferencias periódicas</li>
+                  <li>El ahorro recomendado se calcula con tus últimos 3 meses</li>
+                  <li>Si no puedes llegar al objetivo, ahorra el 50% de tu balance</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GOALS -->
+        <div class="page" id="page-goals">
+          <div class="page-header">
+            <div>
+              <h2>✈️ Metas de Ahorro</h2>
+              <p class="subtitle">Ahorra para tus sueños</p>
+            </div>
+            <button class="btn btn-primary" onclick="openGoalModal()">+ Nueva meta</button>
+          </div>
+          <div class="goals-grid" id="goalsList"></div>
+        </div>
+
+        <!-- CATEGORIES -->
+        <div class="page" id="page-categories">
+          <div class="page-header">
+            <div>
+              <h2>Categorías</h2>
+              <p class="subtitle">Organiza tus ingresos y gastos</p>
+            </div>
+            <button class="btn btn-primary" onclick="openCategoryModal()">+ Nueva categoría</button>
+          </div>
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-header">
+                <h3>💰 Ingresos</h3>
+              </div>
+              <div class="panel-body" id="incomeCats"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-header">
+                <h3>💸 Gastos</h3>
+              </div>
+              <div class="panel-body" id="expenseCats"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- iOS SHORTCUTS -->
+        <div class="page" id="page-shortcuts">
+          <div class="page-header">
+            <div>
+              <h2>📱 Atajos iOS</h2>
+              <p class="subtitle">Registra gastos desde el Centro de Control de tu iPhone</p>
+            </div>
+            <button class="btn btn-primary" onclick="createToken()">+ Crear Token</button>
+          </div>
+
+          <!-- Info Banner -->
+          <div class="panel" style="border-left: 3px solid var(--accent);">
+            <div class="panel-body" style="padding:20px;">
+              <div style="display:flex;gap:16px;align-items:flex-start;">
+                <span style="font-size:2rem;">⚡</span>
+                <div>
+                  <h3 style="margin-bottom:8px;">¿Cómo funciona?</h3>
+                  <p style="color:var(--muted);line-height:1.6;margin-bottom:12px;">
+                    Crea un token API y configura un Atajo de iOS para registrar gastos e ingresos directamente desde el
+                    Centro de Control de tu iPhone, sin abrir la app. El flujo te preguntará el tipo, monto, descripción
+                    y categoría, igual que en el video.
+                  </p>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <span class="tag"
+                      style="background:var(--green-dim);color:var(--green);padding:4px 12px;border-radius:20px;font-size:0.8rem;">1.
+                      Crea un token</span>
+                    <span class="tag"
+                      style="background:var(--accent-dim, rgba(129,140,248,0.15));color:var(--accent);padding:4px 12px;border-radius:20px;font-size:0.8rem;">2.
+                      Copia el token</span>
+                    <span class="tag"
+                      style="background:var(--red-dim);color:var(--red);padding:4px 12px;border-radius:20px;font-size:0.8rem;">3.
+                      Configura el Atajo</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active Tokens -->
+          <div class="panel">
+            <div class="panel-header">
+              <h3>🔑 Tokens API</h3>
+            </div>
+            <div class="panel-body" id="tokensList">
+              <div class="empty-state">
+                <div class="empty-icon">🔐</div>
+                <p>No tienes tokens creados</p>
+                <p style="color:var(--dim);font-size:0.85rem;">Crea uno para empezar a usar los atajos</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Setup Guide -->
+          <div class="panel">
+            <div class="panel-header">
+              <h3>📖 Guía de configuración</h3>
+            </div>
+            <div class="panel-body" id="shortcutGuide" style="padding:20px;">
+              <div class="shortcut-steps">
+                <div class="shortcut-step">
+                  <div class="step-number">1</div>
+                  <div>
+                    <h4>Crear el Atajo en tu iPhone</h4>
+                    <p style="color:var(--muted);margin-top:4px;">Abre la app <strong>Atajos</strong> de Apple → toca
+                      <strong>+</strong> → dale nombre: <strong>"Registrar gasto"</strong>
+                    </p>
+                  </div>
+                </div>
+                <div class="shortcut-step">
+                  <div class="step-number">2</div>
+                  <div>
+                    <h4>Añadir acción "Elegir en menú"</h4>
+                    <p style="color:var(--muted);margin-top:4px;">Busca <strong>"Elegir en menú"</strong> y añade dos
+                      opciones: <strong>"Gasto único"</strong> y <strong>"Pago recurrente"</strong></p>
+                  </div>
+                </div>
+                <div class="shortcut-step">
+                  <div class="step-number">3</div>
+                  <div>
+                    <h4>Para "Gasto único"</h4>
+                    <p style="color:var(--muted);margin-top:4px;">
+                      Añade estos pasos:<br>
+                      • <strong>Solicitar entrada</strong> → "¿Cuánto gastaste?" (tipo: Número)<br>
+                      • <strong>Solicitar entrada</strong> → "¿En qué lo gastaste?" (tipo: Texto)<br>
+                      • <strong>Elegir en lista</strong> → Tus categorías (Comida, Transporte, etc.)<br>
+                      • <strong>Obtener contenido de URL</strong> → método POST a tu API
+                    </p>
+                  </div>
+                </div>
+                <div class="shortcut-step">
+                  <div class="step-number">4</div>
+                  <div>
+                    <h4>Configurar la llamada API</h4>
+                    <p style="color:var(--muted);margin-top:4px;">
+                      URL: <code id="shortcutApiUrl"
+                        style="background:var(--elevated);padding:2px 8px;border-radius:4px;font-size:0.85rem;cursor:pointer;"
+                        onclick="copyApiUrl()">cargando...</code><br>
+                      Método: <strong>POST</strong><br>
+                      Headers: <code>Authorization: Bearer TU_TOKEN</code><br>
+                      Body (JSON):
+                    </p>
+                    <pre
+                      style="background:var(--elevated);padding:16px;border-radius:8px;margin-top:8px;font-size:0.8rem;overflow-x:auto;line-height:1.5;color:var(--text);"><code>{
+  "type": "expense",
+  "amount": [Monto solicitado],
+  "description": [Texto solicitado],
+  "category_name": [Categoría elegida]
+}</code></pre>
+                  </div>
+                </div>
+                <div class="shortcut-step">
+                  <div class="step-number">5</div>
+                  <div>
+                    <h4>Añadir al Centro de Control</h4>
+                    <p style="color:var(--muted);margin-top:4px;">Ve a <strong>Ajustes → Centro de Control</strong> →
+                      añade un <strong>control de Atajos</strong> y selecciona tu atajo "Registrar gasto"</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- API Reference -->
+          <div class="panel">
+            <div class="panel-header">
+              <h3>🔧 Referencia API</h3>
+            </div>
+            <div class="panel-body" style="padding:20px;">
+              <div style="display:flex;flex-direction:column;gap:16px;">
+                <div style="background:var(--elevated);padding:16px;border-radius:10px;">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                    <span
+                      style="background:var(--green-dim);color:var(--green);padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:700;">GET</span>
+                    <code style="font-size:0.85rem;">/shortcuts/categories?type=expense</code>
+                  </div>
+                  <p style="color:var(--muted);font-size:0.85rem;">Lista tus categorías (para menú del Atajo)</p>
+                </div>
+                <div style="background:var(--elevated);padding:16px;border-radius:10px;">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                    <span
+                      style="background:var(--green-dim);color:var(--green);padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:700;">GET</span>
+                    <code style="font-size:0.85rem;">/shortcuts/accounts</code>
+                  </div>
+                  <p style="color:var(--muted);font-size:0.85rem;">Lista tus cuentas</p>
+                </div>
+                <div style="background:var(--elevated);padding:16px;border-radius:10px;">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                    <span
+                      style="background:rgba(248,113,113,0.15);color:#f87171;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:700;">POST</span>
+                    <code style="font-size:0.85rem;">/shortcuts/transaction</code>
+                  </div>
+                  <p style="color:var(--muted);font-size:0.85rem;">Registrar gasto o ingreso:
+                    <code>{ type, amount, description, category_name }</code>
+                  </p>
+                </div>
+                <div style="background:var(--elevated);padding:16px;border-radius:10px;">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                    <span
+                      style="background:var(--green-dim);color:var(--green);padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:700;">GET</span>
+                    <code style="font-size:0.85rem;">/shortcuts/balance</code>
+                  </div>
+                  <p style="color:var(--muted);font-size:0.85rem;">Resumen del mes: ingresos, gastos y saldo por cuenta
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TASKS -->
+        <!-- TASKS -->
+        <div class="page" id="page-tasks">
+          <div class="page-header">
+            <div>
+              <h2>✅ Tareas</h2>
+              <p class="subtitle">Apunta las cosas que tienes que hacer</p>
+            </div>
+            <button class="btn btn-primary" onclick="openTaskModal()">+ Nueva tarea</button>
+          </div>
+          <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="stat-card balance animate-in delay-1">
+              <div class="stat-label">Pendientes</div>
+              <div class="stat-value" id="tasksPending">0</div>
+              <div class="stat-icon">📋</div>
+            </div>
+            <div class="stat-card income animate-in delay-2">
+              <div class="stat-label">Completadas</div>
+              <div class="stat-value" id="tasksCompleted">0</div>
+              <div class="stat-icon">🎉</div>
+            </div>
+            <div class="stat-card total animate-in delay-3">
+              <div class="stat-label">Total</div>
+              <div class="stat-value" id="tasksTotal">0</div>
+              <div class="stat-icon">📝</div>
+            </div>
+          </div>
+
+          <!-- Filter tabs -->
+          <div style="display:flex;gap:8px;margin-bottom:16px;">
+            <button class="btn btn-primary btn-sm task-filter-tab active" data-filter="pending"
+              onclick="filterTasks('pending', this)">📋 Pendientes</button>
+            <button class="btn btn-secondary btn-sm task-filter-tab" data-filter="all"
+              onclick="filterTasks('all', this)">📝 Todas</button>
+            <button class="btn btn-secondary btn-sm task-filter-tab" data-filter="completed"
+              onclick="filterTasks('completed', this)">✅ Completadas</button>
+          </div>
+
+          <div class="panel">
+            <div class="panel-body" id="tasksList"></div>
+          </div>
+        </div>
+
+        <!-- DEBTS -->
+        <div class="page" id="page-debts">
+          <div class="page-header">
+            <div>
+              <h2>💳 Deudas</h2>
+              <p class="subtitle">Controla lo que debes y te deben</p>
+            </div>
+            <button class="btn btn-primary" onclick="openDebtModal()">+ Nueva deuda</button>
+          </div>
+          <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr);">
+            <div class="stat-card income animate-in delay-1">
+              <div class="stat-label">Te deben</div>
+              <div class="stat-value" id="totalOwed">€0</div>
+              <div class="stat-icon">📥</div>
+            </div>
+            <div class="stat-card expense animate-in delay-2">
+              <div class="stat-label">Debes</div>
+              <div class="stat-value" id="totalOwe">€0</div>
+              <div class="stat-icon">📤</div>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-header">
+                <h3>📥 Te deben</h3>
+              </div>
+              <div class="panel-body" id="debtsOwedList"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-header">
+                <h3>📤 Debes</h3>
+              </div>
+              <div class="panel-body" id="debtsOweList"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MONTHLY RECAP -->
+        <div class="page" id="page-recap">
+          <div class="page-header">
+            <div>
+              <h2>📊 Resumen Mensual</h2>
+              <p class="subtitle">Analiza tu evolución financiera</p>
+            </div>
+            <input type="month" class="form-input" id="recapMonth" onchange="loadRecap()" style="width:auto;">
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card income animate-in delay-1">
+              <div class="stat-label">Ingresos</div>
+              <div class="stat-value" id="recapIncome">€0</div>
+              <div class="stat-change" id="recapIncomeChange"></div>
+            </div>
+            <div class="stat-card expense animate-in delay-2">
+              <div class="stat-label">Gastos</div>
+              <div class="stat-value" id="recapExpenses">€0</div>
+              <div class="stat-change" id="recapExpenseChange"></div>
+            </div>
+            <div class="stat-card balance animate-in delay-3">
+              <div class="stat-label">Balance</div>
+              <div class="stat-value" id="recapBalance">€0</div>
+              <div class="stat-icon">💰</div>
+            </div>
+            <div class="stat-card animate-in delay-4">
+              <div class="stat-label">Transacciones</div>
+              <div class="stat-value" id="recapCount">0</div>
+              <div class="stat-icon">📝</div>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-header">
+                <h3>🏆 Top categorías de gasto</h3>
+              </div>
+              <div class="panel-body" id="recapCategories"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-header">
+                <h3>⚠️ Alertas de presupuesto</h3>
+              </div>
+              <div class="panel-body" id="recapAlerts"></div>
+            </div>
+          </div>
+        </div>
+        <!-- ADMIN DASHBOARD -->
+        <div class="page" id="page-admin">
+          <div class="page-header">
+            <div>
+              <h2>👑 Administración</h2>
+              <p class="subtitle">Gestionar usuarios de la plataforma</p>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-body no-pad">
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Nombre</th>
+                      <th>Correo</th>
+                      <th>Rol</th>
+                      <th>Registro</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminUsersTable"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ═══ CHATBOT WIDGET ═══ -->
+  <div id="chatWidget" class="chat-widget" style="display: none;">
+    <!-- Chat Window -->
+    <div id="chatWindow" class="chat-window">
+      <div class="chat-header">
+        <div class="chat-header-info">
+          <span class="chat-avatar">🤖</span>
+          <div>
+            <h3>Taitou AI</h3>
+            <span class="chat-status">En línea</span>
+          </div>
+        </div>
+        <button class="btn-icon" onclick="toggleChat()" style="color:var(--text-muted);font-size:1.2rem;">✖</button>
+      </div>
+      <div id="chatBody" class="chat-body">
+        <div class="chat-message bot-message">
+          <div class="message-content">¡Hola! Soy Taitou AI, tu asistente financiero personal. ¿En qué puedo ayudarte hoy?</div>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <input type="text" id="chatInput" placeholder="Pregúntame sobre tus gastos..." onkeypress="handleChatKeypress(event)">
+        <button class="chat-send-btn" onclick="sendChatMessage()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </button>
+      </div>
+    </div>
+    
+    <!-- Floating Button -->
+    <button id="chatFab" class="chat-fab" onclick="toggleChat()" title="Asistente de IA">
+      <span class="chat-fab-icon">✨</span>
+    </button>
+  </div>
+
+  <!-- ═══ MODALS ═══ -->
+
+  <!-- Transaction Modal -->
+  <div class="modal-overlay" id="transactionModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="txModalTitle">Nueva transacción</h3>
+        <button class="modal-close" onclick="closeModal('transactionModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="txId">
+        <!-- Scan from photo button - only shown for new transactions -->
+        <div id="txScanBanner" class="tx-scan-banner" onclick="scanFromTransaction()">
+          <span class="tx-scan-banner-icon">📸</span>
+          <div class="tx-scan-banner-text">
+            <strong>Rellenar desde foto</strong>
+            <span>Sube la foto de un ticket y se autocompleta</span>
+          </div>
+          <span class="tx-scan-banner-arrow">→</span>
+        </div>
+        <div class="type-tabs" id="typeTabs">
+          <button class="type-tab active-expense" data-type="expense" onclick="setTxType('expense')">Gasto</button>
+          <button class="type-tab" data-type="income" onclick="setTxType('income')">Ingreso</button>
+          <button class="type-tab" data-type="transfer" onclick="setTxType('transfer')">Transferencia</button>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Monto *</label><input type="number" class="form-input"
+              id="txAmount" step="0.01" min="0" placeholder="0.00"></div>
+          <div class="form-group"><label class="form-label">Fecha *</label><input type="date" class="form-input"
+              id="txDate"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Descripción</label><input type="text" class="form-input"
+            id="txDescription" placeholder="Ej: Compra supermercado"></div>
+        <div class="form-group" id="txCategoryGroup"><label class="form-label">Categoría</label><select
+            class="form-select" id="txCategory"></select></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label" id="txAccountLabel">Cuenta</label><select
+              class="form-select" id="txAccount"></select></div>
+          <div class="form-group" id="txToAccountGroup" style="display:none;"><label class="form-label">Cuenta
+              destino</label><select class="form-select" id="txToAccount"></select></div>
+        </div>
+        <div class="form-group"><label class="form-label">Notas</label><textarea class="form-input" id="txNotes"
+            placeholder="Notas adicionales..."></textarea></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('transactionModal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveTransaction()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Account Modal -->
+  <div class="modal-overlay" id="accountModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Nueva cuenta</h3><button class="modal-close" onclick="closeModal('accountModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group"><label class="form-label">Nombre</label><input type="text" class="form-input"
+            id="accName" placeholder="Ej: Banco Santander"></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Tipo</label>
+            <select class="form-select" id="accType">
+              <option value="bank">🏦 Banco</option>
+              <option value="cash">💵 Efectivo</option>
+              <option value="credit_card">💳 Tarjeta crédito</option>
+              <option value="savings">🐷 Ahorro</option>
+              <option value="investment">📈 Inversión</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Saldo inicial</label><input type="number" class="form-input"
+              id="accBalance" step="0.01" value="0"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Moneda</label><select class="form-select" id="accCurrency">
+              <option value="EUR">EUR €</option>
+              <option value="USD">USD $</option>
+              <option value="GBP">GBP £</option>
+            </select></div>
+          <div class="form-group"><label class="form-label">Color</label><input type="color" class="form-input"
+              id="accColor" value="#6366f1" style="height:42px;padding:4px;"></div>
+        </div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary"
+          onclick="closeModal('accountModal')">Cancelar</button><button class="btn btn-primary"
+          onclick="saveAccount()">Guardar</button></div>
+    </div>
+  </div>
+
+  <!-- Budget Modal -->
+  <div class="modal-overlay" id="budgetModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Nuevo presupuesto</h3><button class="modal-close" onclick="closeModal('budgetModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group"><label class="form-label">Categoría</label><select class="form-select"
+            id="budgetCategory"></select></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Monto límite</label><input type="number" class="form-input"
+              id="budgetAmount" step="0.01" min="0"></div>
+          <div class="form-group"><label class="form-label">Período</label><select class="form-select"
+              id="budgetPeriod">
+              <option value="monthly">Mensual</option>
+              <option value="weekly">Semanal</option>
+              <option value="yearly">Anual</option>
+            </select></div>
+        </div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary"
+          onclick="closeModal('budgetModal')">Cancelar</button><button class="btn btn-primary"
+          onclick="saveBudget()">Guardar</button></div>
+    </div>
+  </div>
+
+  <!-- Category Modal -->
+  <div class="modal-overlay" id="categoryModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Nueva categoría</h3><button class="modal-close" onclick="closeModal('categoryModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group"><label class="form-label">Nombre</label><input type="text" class="form-input"
+            id="catName" placeholder="Ej: Gimnasio"></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Tipo</label><select class="form-select" id="catType">
+              <option value="expense">Gasto</option>
+              <option value="income">Ingreso</option>
+            </select></div>
+          <div class="form-group"><label class="form-label">Icono (emoji)</label><input type="text" class="form-input"
+              id="catIcon" value="💰" maxlength="4"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Color</label><input type="color" class="form-input"
+            id="catColor" value="#6366f1" style="height:42px;padding:4px;"></div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary"
+          onclick="closeModal('categoryModal')">Cancelar</button><button class="btn btn-primary"
+          onclick="saveCategory()">Guardar</button></div>
+    </div>
+  </div>
+
+  <!-- Profile Modal -->
+  <div class="modal-overlay" id="profileModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>👤 Mi perfil</h3><button class="modal-close" onclick="closeModal('profileModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group"><label class="form-label">Nombre</label><input type="text" class="form-input"
+            id="profileName"></div>
+        <div class="form-group"><label class="form-label">Correo electrónico</label><input type="email"
+            class="form-input" id="profileEmail"></div>
+        <div style="border-top:1px solid var(--border);margin:20px 0;padding-top:20px;">
+          <h4 style="font-size:0.9rem;margin-bottom:14px;color:var(--text-secondary);">Cambiar contraseña</h4>
+          <div class="form-group"><label class="form-label">Contraseña actual</label><input type="password"
+              class="form-input" id="profileCurrentPw" placeholder="Dejar vacío para no cambiar"></div>
+          <div class="form-group"><label class="form-label">Nueva contraseña</label><input type="password"
+              class="form-input" id="profileNewPw" placeholder="Mínimo 6 caracteres"></div>
+        </div>
+        <div id="profileError" class="auth-error"></div>
+        <div style="border-top:1px solid var(--border);margin:20px 0;padding-top:20px;">
+          <button class="btn btn-danger" onclick="handleLogout()">🚪 Cerrar sesión</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('profileModal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveProfile()">Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Savings Plan Modal -->
+  <div class="modal-overlay" id="savingsPlanModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>🐷 Configurar Plan de Ahorro</h3>
+        <button class="modal-close" onclick="closeModal('savingsPlanModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Nombre del plan</label>
+          <input type="text" class="form-input" id="planName" value="Mi Plan de Ahorro"
+            placeholder="Ej: Ahorro mensual">
+        </div>
+        <div class="form-group">
+          <label class="form-label">% de ingresos a ahorrar</label>
+          <input type="number" class="form-input" id="planPercentage" value="20" min="1" max="100" step="1">
+          <small style="color:var(--text-muted);font-size:0.75rem;">Recomendado: 20%</small>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cuenta de ahorro (hucha)</label>
+          <select class="form-select" id="planAccount"></select>
+          <small style="color:var(--text-muted);font-size:0.75rem;">Selecciona la cuenta donde transferirás tus
+            ahorros</small>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Meta de ahorro (€)</label>
+          <input type="number" class="form-input" id="planGoalTarget" step="0.01" min="0" value="0" placeholder="5000">
+          <small style="color:var(--text-muted);font-size:0.75rem;">¿Cuánto quieres ahorrar en total?</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('savingsPlanModal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveSavingsPlan()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add to Hucha Modal -->
+  <div class="modal-overlay" id="addToHuchaModal">
+    <div class="modal" style="max-width:400px;">
+      <div class="modal-header">
+        <h3>💰 Añadir a la hucha</h3>
+        <button class="modal-close" onclick="closeModal('addToHuchaModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Cantidad (€)</label>
+          <input type="number" class="form-input" id="huchaAmount" step="0.01" min="0" placeholder="100">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Desde cuenta</label>
+          <select class="form-select" id="huchaFromAccount"></select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('addToHuchaModal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="confirmAddToHucha()">Añadir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Goal Modal -->
+  <div class="modal-overlay" id="goalModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="goalModalTitle">Nueva meta</h3>
+        <button class="modal-close" onclick="closeModal('goalModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="goalId">
+        <div class="form-group">
+          <label class="form-label">Nombre de la meta</label>
+          <input type="text" class="form-input" id="goalName" placeholder="Ej: Viaje a Japón">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Objetivo (€)</label>
+            <input type="number" class="form-input" id="goalTarget" step="0.01" min="0" placeholder="3000">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ahorrado (€)</label>
+            <input type="number" class="form-input" id="goalCurrent" step="0.01" min="0" value="0">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Fecha objetivo</label>
+            <input type="date" class="form-input" id="goalDate">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Color</label>
+            <input type="color" class="form-input" id="goalColor" value="#6366f1" style="height:42px;padding:4px;">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Icono (emoji)</label>
+          <input type="text" class="form-input" id="goalIcon" value="✈️" maxlength="4">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('goalModal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveGoal()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Funds to Goal Modal -->
+  <div class="modal-overlay" id="addFundsModal">
+    <div class="modal" style="max-width:400px;">
+      <div class="modal-header">
+        <h3>💰 Añadir fondos</h3>
+        <button class="modal-close" onclick="closeModal('addFundsModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="addFundsGoalId">
+        <p style="color:var(--text-secondary);margin-bottom:16px;">Añadir a: <strong id="addFundsGoalName"></strong></p>
+        <div class="form-group">
+          <label class="form-label">Desde cuenta</label>
+          <select class="form-select" id="addFundsAccount"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cantidad (€)</label>
+          <input type="number" class="form-input" id="addFundsAmount" step="0.01" min="0" placeholder="100">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('addFundsModal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="confirmAddFunds()">Añadir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recurring Expense Modal -->
+  <!-- Task Modal -->
+  <div class="modal-overlay" id="taskModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="taskModalTitle">Nueva tarea</h3>
+        <button class="modal-close" onclick="closeModal('taskModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="taskId">
+        <div class="form-group">
+          <label class="form-label">Título</label>
+          <input type="text" class="form-input" id="taskTitle" placeholder="¿Qué tienes que hacer?">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descripción <span
+              style="color:var(--text-muted);font-weight:400;">(opcional)</span></label>
+          <textarea class="form-input" id="taskDescription" rows="3" placeholder="Detalles adicionales..."
+            style="resize:vertical;"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Prioridad</label>
+            <select class="form-select" id="taskPriority">
+              <option value="low">🟢 Baja</option>
+              <option value="medium" selected>🟡 Media</option>
+              <option value="high">🔴 Alta</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Fecha límite <span
+                style="color:var(--text-muted);font-weight:400;">(opcional)</span></label>
+            <input type="date" class="form-input" id="taskDueDate">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('taskModal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveTask()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Debt Modal -->
+  <div class="modal-overlay" id="debtModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="debtModalTitle">Nueva deuda</h3>
+        <button class="modal-close" onclick="closeModal('debtModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="debtId">
+        <div class="form-group">
+          <label class="form-label">Concepto</label>
+          <input type="text" class="form-input" id="debtName" placeholder="Ej: Cena del viernes, Préstamo coche...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Persona</label>
+          <input type="text" class="form-input" id="debtPerson" placeholder="Nombre de la persona">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Cantidad (€)</label>
+            <input type="number" class="form-input" id="debtAmount" step="0.01" min="0" placeholder="50">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tipo</label>
+            <select class="form-select" id="debtType">
+              <option value="owed">Me deben a mí</option>
+              <option value="owe">Yo debo</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha límite (opcional)</label>
+          <input type="date" class="form-input" id="debtDueDate">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notas (opcional)</label>
+          <textarea class="form-input" id="debtNotes" rows="2" placeholder="Detalles adicionales..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('debtModal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveDebt()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pay Debt Modal -->
+  <div class="modal-overlay" id="payDebtModal">
+    <div class="modal" style="max-width:400px;">
+      <div class="modal-header">
+        <h3>💰 Registrar pago</h3>
+        <button class="modal-close" onclick="closeModal('payDebtModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="payDebtId">
+        <p style="color:var(--text-secondary);margin-bottom:16px;" id="payDebtInfo"></p>
+        <div class="form-group">
+          <label class="form-label">Cantidad a pagar (€)</label>
+          <input type="number" class="form-input" id="payDebtAmount" step="0.01" min="0">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('payDebtModal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="confirmPayDebt()">Pagar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import CSV/Excel Modal -->
+  <div class="modal-overlay" id="importModal">
+    <div class="modal" style="max-width:700px;">
+      <div class="modal-header">
+        <h3>📤 Importar transacciones</h3>
+        <button class="modal-close" onclick="closeModal('importModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="color:var(--text-secondary);margin-bottom:12px;">Sube un archivo <strong>CSV</strong> o <strong>Excel
+            (.xlsx)</strong> con tus transacciones. El archivo debe tener estas columnas (el orden no importa):</p>
+        <div
+          style="background:var(--bg-secondary);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:13px;font-family:monospace;overflow-x:auto;">
+          Fecha, Tipo, Monto, Descripción, Categoría, Cuenta, Notas
+        </div>
+        <p style="color:var(--text-secondary);margin-bottom:16px;font-size:13px;">
+          <strong>Tipo</strong>: income / expense &nbsp;|&nbsp; <strong>Fecha</strong>: YYYY-MM-DD &nbsp;|&nbsp;
+          <strong>Categoría</strong> y <strong>Cuenta</strong>: nombre exacto (si no existe se usará la primera
+          disponible)
+        </p>
+        <div class="form-group">
+          <label class="form-label">Seleccionar archivo</label>
+          <input type="file" class="form-input" id="importFile" accept=".csv,.xlsx,.xls" onchange="previewImportFile()"
+            style="padding:10px;">
+        </div>
+        <div id="importPreview" style="display:none;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <strong id="importPreviewCount" style="color:var(--text-secondary);font-size:14px;"></strong>
+            <span id="importPreviewWarnings" style="color:#f59e0b;font-size:13px;"></span>
+          </div>
+          <div style="max-height:250px;overflow:auto;border:1px solid var(--border);border-radius:8px;">
+            <table style="width:100%;font-size:12px;border-collapse:collapse;" id="importPreviewTable">
+              <thead id="importPreviewHead"></thead>
+              <tbody id="importPreviewBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('importModal')">Cancelar</button>
+        <button class="btn btn-primary" id="importBtn" onclick="executeImport()" disabled>Importar
+          transacciones</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transaction Detail Modal -->
+  <div class="modal-overlay" id="txDetailModal">
+    <div class="modal" style="max-width:480px;">
+      <div class="modal-header">
+        <h3>📋 Detalle de transacción</h3>
+        <button class="modal-close" onclick="closeModal('txDetailModal')">✕</button>
+      </div>
+      <div class="modal-body" style="padding:0;">
+        <div class="tx-detail-amount" id="txDetailAmount"></div>
+        <div class="tx-detail-body">
+          <div class="tx-detail-row">
+            <span class="tx-detail-label">Tipo</span>
+            <span class="tx-detail-value" id="txDetailType"></span>
+          </div>
+          <div class="tx-detail-row">
+            <span class="tx-detail-label">Fecha</span>
+            <span class="tx-detail-value" id="txDetailDate"></span>
+          </div>
+          <div class="tx-detail-row">
+            <span class="tx-detail-label">Descripción</span>
+            <span class="tx-detail-value" id="txDetailDesc"></span>
+          </div>
+          <div class="tx-detail-row">
+            <span class="tx-detail-label">Categoría</span>
+            <span class="tx-detail-value" id="txDetailCategory"></span>
+          </div>
+          <div class="tx-detail-row">
+            <span class="tx-detail-label">Cuenta</span>
+            <span class="tx-detail-value" id="txDetailAccount"></span>
+          </div>
+          <div class="tx-detail-row" id="txDetailNotesRow" style="display:none;">
+            <span class="tx-detail-label">Notas</span>
+            <span class="tx-detail-value" id="txDetailNotes"></span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content:space-between;">
+        <button class="btn btn-secondary" onclick="closeModal('txDetailModal')">Cerrar</button>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary" id="txDetailEditBtn">✏️ Editar</button>
+          <button class="btn btn-danger" id="txDetailDeleteBtn">🗑️ Eliminar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Receipt Scanner Modal -->
+  <div class="modal-overlay" id="scannerModal">
+    <div class="modal" style="max-width:560px;">
+      <div class="modal-header">
+        <h3>📸 Escanear ticket</h3>
+        <button class="modal-close" onclick="closeScannerModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- Step 1: Upload -->
+        <div id="scannerUploadStep">
+          <div class="scanner-dropzone" id="scannerDropzone">
+            <div class="scanner-dropzone-icon">📷</div>
+            <p class="scanner-dropzone-text">Arrastra una foto del ticket aquí</p>
+            <p class="scanner-dropzone-hint">o haz clic para seleccionar</p>
+            <input type="file" id="scannerFileInput" accept="image/*" capture="environment" style="display:none;"
+              onchange="handleScannerFile(this.files[0])">
+          </div>
+          <p style="text-align:center;color:var(--text-muted);font-size:0.78rem;margin-top:12px;">
+            📱 En móvil se abrirá la cámara directamente
+          </p>
+        </div>
+
+        <!-- Step 2: Processing -->
+        <div id="scannerProcessingStep" style="display:none;">
+          <div class="scanner-preview-container">
+            <img id="scannerPreviewImg" class="scanner-preview-img" alt="Preview del ticket">
+          </div>
+          <div class="scanner-progress">
+            <div class="scanner-progress-label">
+              <span id="scannerProgressText">Preparando OCR...</span>
+              <span id="scannerProgressPct">0%</span>
+            </div>
+            <div class="scanner-progress-bar">
+              <div class="scanner-progress-fill" id="scannerProgressFill"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Results -->
+        <div id="scannerResultsStep" style="display:none;">
+          <div class="scanner-preview-container" style="max-height:140px;">
+            <img id="scannerResultImg" class="scanner-preview-img" alt="Ticket escaneado">
+          </div>
+          <!-- Confidence summary bar -->
+          <div id="scannerConfidenceBar" style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;"></div>
+          <div class="scanner-results-card">
+            <h4 style="margin-bottom:16px;font-size:0.95rem;">📋 Datos extraídos</h4>
+            <div class="form-group">
+              <label class="form-label">Descripción / Comercio</label>
+              <input type="text" class="form-input" id="scannerDescription" placeholder="No detectado">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Monto (€)</label>
+                <input type="number" class="form-input" id="scannerAmount" step="0.01" min="0" placeholder="0.00">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Fecha</label>
+                <input type="date" class="form-input" id="scannerDate">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Categoría sugerida</label>
+              <select class="form-select" id="scannerCategory">
+                <option value="">— Sin categoría —</option>
+              </select>
+            </div>
+            <div id="scannerRawTextToggle" style="margin-top:8px;">
+              <button class="btn btn-sm"
+                style="font-size:0.75rem;padding:4px 10px;background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-muted);border-radius:6px;cursor:pointer;"
+                onclick="toggleScannerRawText()">Ver texto OCR completo ▾</button>
+              <pre id="scannerRawText"
+                style="display:none;margin-top:8px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:0.72rem;max-height:150px;overflow:auto;color:var(--text-secondary);white-space:pre-wrap;word-break:break-word;"></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Error state -->
+        <div id="scannerErrorStep" style="display:none;">
+          <div class="empty-state">
+            <div class="empty-icon">❌</div>
+            <p id="scannerErrorMsg">Error al procesar la imagen</p>
+            <button class="btn btn-secondary" onclick="resetScanner()" style="margin-top:16px;">Intentar de
+              nuevo</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" id="scannerFooter">
+        <button class="btn btn-secondary" onclick="closeScannerModal()">Cancelar</button>
+        <button class="btn btn-primary" id="scannerCreateBtn" onclick="applyScannedData()" style="display:none;">💸
+          Crear transacción</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- ═══ FLOATING ACTION BUTTON (Mobile) ═══ -->
+  <button class="fab" id="fab" onclick="openNewTransaction()" title="Añadir transacción" style="display:none">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+      stroke-linecap="round">
+      <line x1="12" y1="5" x2="12" y2="19"></line>
+      <line x1="5" y1="12" x2="19" y2="12"></line>
+    </svg>
+  </button>
+
+  <!-- Quick Add Transaction Modal -->
+  <div class="modal-overlay" id="quickAddModal">
+    <div class="modal quick-add-modal">
+      <div class="modal-header">
+        <h3>⚡ Registro rápido</h3>
+        <button class="modal-close" onclick="closeModal('quickAddModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="quick-type-tabs">
+          <button class="quick-type-tab active" data-qtype="expense" onclick="setQuickType('expense')">💸 Gasto</button>
+          <button class="quick-type-tab" data-qtype="income" onclick="setQuickType('income')">💰 Ingreso</button>
+        </div>
+        <div class="quick-amount-display">
+          <span class="quick-currency">€</span>
+          <input type="number" id="quickAmount" class="quick-amount-input" placeholder="0.00" step="0.01" min="0"
+            inputmode="decimal" autofocus>
+        </div>
+        <input type="text" class="form-input" id="quickDescription"
+          placeholder="Descripción (ej: Café, Supermercado...)"
+          style="margin-bottom:12px;text-align:center;font-size:1rem;">
+        <select class="form-select" id="quickCategory" style="margin-bottom:12px;">
+          <option value="">Sin categoría</option>
+        </select>
+        <select class="form-select" id="quickAccount" style="margin-bottom:12px;">
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('quickAddModal')">Cancelar</button>
+        <button class="btn btn-primary btn-full" onclick="saveQuickTransaction()" style="flex:2;">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PWA Install Banner -->
+  <div class="install-banner" id="installBanner" style="display:none;">
+    <div class="install-banner-content">
+      <div class="install-banner-icon">📲</div>
+      <div class="install-banner-text">
+        <strong>Instalar Taitou</strong>
+        <span>Accede más rápido desde tu pantalla de inicio</span>
+      </div>
+      <div class="install-banner-actions">
+        <button class="btn btn-sm" onclick="dismissInstallBanner()">Ahora no</button>
+        <button class="btn btn-primary btn-sm" onclick="installApp()">Instalar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="/js/app.js?v=20260303f"></script>
+
+  <script>
+    // ─── SERVICE WORKER REGISTRATION ─────────────────
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/sw.js').then(function (reg) {
+          console.log('✅ Service Worker registrado:', reg.scope);
+        }).catch(function (err) {
+          console.log('❌ Service Worker error:', err);
+        });
+      });
+    }
+
+    // ─── PWA INSTALL PROMPT ─────────────────────────
+    var deferredPrompt = null;
+
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      deferredPrompt = e;
+      // Show install banner after 3 seconds
+      setTimeout(function () {
+        if (!localStorage.getItem('installDismissed')) {
+          document.getElementById('installBanner').style.display = '';
+        }
+      }, 3000);
+    });
+
+    function installApp() {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(function (result) {
+        if (result.outcome === 'accepted') {
+          toast('🎉 ¡App instalada!', 'success');
+        }
+        deferredPrompt = null;
+        document.getElementById('installBanner').style.display = 'none';
+      });
+    }
+
+    function dismissInstallBanner() {
+      document.getElementById('installBanner').style.display = 'none';
+      localStorage.setItem('installDismissed', '1');
+    }
+
+    // ─── QUICK ADD TRANSACTION ──────────────────────
+    var quickType = 'expense';
+
+    function openQuickAdd() {
+      quickType = 'expense';
+      document.querySelectorAll('.quick-type-tab').forEach(function (t) {
+        t.classList.toggle('active', t.dataset.qtype === 'expense');
+      });
+      document.getElementById('quickAmount').value = '';
+      document.getElementById('quickDescription').value = '';
+
+      // Populate categories for expense
+      var catSelect = document.getElementById('quickCategory');
+      catSelect.innerHTML = '<option value="">Sin categoría</option>';
+      if (typeof allCategories !== 'undefined') {
+        allCategories.filter(function (c) { return c.type === 'expense'; }).forEach(function (c) {
+          catSelect.innerHTML += '<option value="' + c.id + '">' + c.icon + ' ' + c.name + '</option>';
+        });
+      }
+
+      // Populate accounts
+      var accSelect = document.getElementById('quickAccount');
+      accSelect.innerHTML = '';
+      if (typeof allAccounts !== 'undefined') {
+        allAccounts.forEach(function (a) {
+          accSelect.innerHTML += '<option value="' + a.id + '">' + (a.icon || '🏦') + ' ' + a.name + '</option>';
+        });
+      }
+
+      openModal('quickAddModal');
+
+      // Check if opened from shortcut
+      var params = new URLSearchParams(window.location.search);
+      if (params.get('action') === 'quick-income') {
+        setQuickType('income');
+      }
+
+      setTimeout(function () {
+        document.getElementById('quickAmount').focus();
+      }, 300);
+    }
+
+    function setQuickType(type) {
+      quickType = type;
+      document.querySelectorAll('.quick-type-tab').forEach(function (t) {
+        t.classList.toggle('active', t.dataset.qtype === type);
+      });
+      var catSelect = document.getElementById('quickCategory');
+      catSelect.innerHTML = '<option value="">Sin categoría</option>';
+      if (typeof allCategories !== 'undefined') {
+        allCategories.filter(function (c) { return c.type === type; }).forEach(function (c) {
+          catSelect.innerHTML += '<option value="' + c.id + '">' + c.icon + ' ' + c.name + '</option>';
+        });
+      }
+    }
+
+    async function saveQuickTransaction() {
+      var amount = parseFloat(document.getElementById('quickAmount').value);
+      if (!amount || amount <= 0) {
+        toast('Introduce un monto válido', 'error');
+        return;
+      }
+
+      var today = new Date().toISOString().split('T')[0];
+      var body = {
+        type: quickType,
+        amount: amount,
+        description: document.getElementById('quickDescription').value || null,
+        category_id: document.getElementById('quickCategory').value || null,
+        account_id: document.getElementById('quickAccount').value,
+        date: today,
+        notes: null
+      };
+
+      try {
+        var res = await fetch('/api/transactions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        var data = await res.json();
+        if (data.success) {
+          toast((quickType === 'expense' ? '💸' : '💰') + ' ' + (quickType === 'expense' ? 'Gasto' : 'Ingreso') + ' de €' + amount.toFixed(2) + ' registrado', 'success');
+          closeModal('quickAddModal');
+          // Refresh dashboard if visible
+          if (typeof loadDashboard === 'function') loadDashboard();
+          if (typeof loadAccounts === 'function') loadAccounts();
+        } else {
+          toast('Error: ' + (data.error || 'Error desconocido'), 'error');
+        }
+      } catch (e) {
+        toast('Error de conexión', 'error');
+      }
+    }
+
+    // Auto-open quick add if launched from shortcut
+    window.addEventListener('load', function () {
+      var params = new URLSearchParams(window.location.search);
+      var action = params.get('action');
+      if (action === 'quick-expense' || action === 'quick-income') {
+        // Wait for app to load, then open quick add
+        setTimeout(function () {
+          if (document.getElementById('appScreen').style.display !== 'none') {
+            openQuickAdd();
+          }
+        }, 1000);
+      }
+    });
+  </script>
+</body>
+
+</html>

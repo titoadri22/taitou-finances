@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Taitou — Registro rápido</title>
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        :root {
+            --bg: #0a0a0f;
+            --card: #16161f;
+            --elevated: #1e1e2a;
+            --border: #2a2a3a;
+            --text: #f0f0f5;
+            --muted: #8888a0;
+            --dim: #55556a;
+            --accent: #818cf8;
+            --green: #34d399;
+            --green-dim: rgba(52, 211, 153, 0.15);
+            --red: #f87171;
+            --red-dim: rgba(248, 113, 113, 0.15);
+            --radius: 12px;
+            --font: 'DM Sans', sans-serif;
+            --mono: 'JetBrains Mono', monospace
+        }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            -webkit-font-smoothing: antialiased
+        }
+
+        .container {
+            width: 100%;
+            max-width: 380px
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 24px
+        }
+
+        .header h1 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--muted)
+        }
+
+        .header .logo {
+            font-size: 2rem;
+            margin-bottom: 8px
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px 24px;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4)
+        }
+
+        /* Type tabs */
+        .type-tabs {
+            display: flex;
+            gap: 6px;
+            background: var(--elevated);
+            border-radius: var(--radius);
+            padding: 5px;
+            margin-bottom: 24px
+        }
+
+        .type-tab {
+            flex: 1;
+            padding: 14px 8px;
+            border: none;
+            background: none;
+            border-radius: 10px;
+            color: var(--dim);
+            font-family: var(--font);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s
+        }
+
+        .type-tab.active[data-type="expense"] {
+            background: var(--red-dim);
+            color: var(--red);
+            box-shadow: 0 2px 12px rgba(248, 113, 113, 0.25)
+        }
+
+        .type-tab.active[data-type="income"] {
+            background: var(--green-dim);
+            color: var(--green);
+            box-shadow: 0 2px 12px rgba(52, 211, 153, 0.25)
+        }
+
+        /* Amount */
+        .amount-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 20px 0;
+            margin-bottom: 20px
+        }
+
+        .currency {
+            font-size: 2.4rem;
+            font-weight: 700;
+            color: var(--dim);
+            font-family: var(--mono)
+        }
+
+        .amount-input {
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 3.2rem;
+            font-weight: 700;
+            font-family: var(--mono);
+            width: 180px;
+            outline: none;
+            appearance: textfield;
+            -moz-appearance: textfield
+        }
+
+        .amount-input::placeholder {
+            color: var(--dim);
+            opacity: 0.3
+        }
+
+        .amount-input::-webkit-outer-spin-button,
+        .amount-input::-webkit-inner-spin-button {
+            -webkit-appearance: none
+        }
+
+        /* Inputs */
+        .input {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--elevated);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+            margin-bottom: 12px
+        }
+
+        .input:focus {
+            border-color: var(--accent)
+        }
+
+        select.input {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238888a0' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 36px
+        }
+
+        /* Button */
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: var(--radius);
+            font-family: var(--font);
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 8px
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, var(--accent), #6366f1);
+            color: white;
+            box-shadow: 0 6px 24px rgba(99, 102, 241, 0.4)
+        }
+
+        .btn-save:active {
+            transform: scale(0.97);
+            box-shadow: 0 2px 12px rgba(99, 102, 241, 0.3)
+        }
+
+        .btn-save:disabled {
+            opacity: 0.5
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 14px 24px;
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            font-weight: 600;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none
+        }
+
+        .toast.show {
+            opacity: 1
+        }
+
+        .toast-ok {
+            background: var(--green-dim);
+            color: var(--green);
+            border: 1px solid rgba(52, 211, 153, 0.3)
+        }
+
+        .toast-err {
+            background: var(--red-dim);
+            color: var(--red);
+            border: 1px solid rgba(248, 113, 113, 0.3)
+        }
+
+        /* Login state */
+        .login-msg {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--muted)
+        }
+
+        .login-msg a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600
+        }
+
+        /* Success animation */
+        @keyframes checkmark {
+            0% {
+                transform: scale(0)
+            }
+
+            50% {
+                transform: scale(1.2)
+            }
+
+            100% {
+                transform: scale(1)
+            }
+        }
+
+        .success-check {
+            font-size: 4rem;
+            text-align: center;
+            animation: checkmark 0.4s ease
+        }
+    </style>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5103831236537652" crossorigin="anonymous"></script>
+</head>
+
+<body>
+
+    <div class="container" id="app">
+        <div class="header">
+            <div class="logo">⚡</div>
+            <h1>Registro rápido</h1>
+        </div>
+
+        <div class="card" id="formCard">
+            <div class="type-tabs">
+                <button class="type-tab active" data-type="expense" onclick="setType('expense')">💸 Gasto</button>
+                <button class="type-tab" data-type="income" onclick="setType('income')">💰 Ingreso</button>
+            </div>
+
+            <div class="amount-wrap">
+                <span class="currency">€</span>
+                <input type="number" class="amount-input" id="amount" placeholder="0.00" step="0.01" inputmode="decimal"
+                    autofocus>
+            </div>
+
+            <input type="text" class="input" id="desc" placeholder="Descripción (ej: Café, Mercadona...)">
+            <select class="input" id="category">
+                <option value="">Sin categoría</option>
+            </select>
+            <select class="input" id="account"></select>
+
+            <button class="btn btn-save" id="saveBtn" onclick="save()">Guardar</button>
+        </div>
+
+        <div class="card" id="successCard" style="display:none;">
+            <div class="success-check">✅</div>
+            <p style="text-align:center;margin-top:16px;font-size:1.1rem;font-weight:600;">¡Registrado!</p>
+            <p style="text-align:center;color:var(--muted);margin-top:8px;font-size:0.9rem;" id="successMsg"></p>
+            <button class="btn btn-save" onclick="reset()" style="margin-top:20px;">+ Otro registro</button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        var type = 'expense';
+        var categories = [];
+        var accounts = [];
+
+        // Check auth & load data
+        (async function init() {
+            try {
+                var res = await fetch('/auth/me');
+                var user = await res.json();
+                if (!user || user.error) {
+                    document.getElementById('formCard').innerHTML =
+                        '<div class="login-msg"><p>Inicia sesión primero</p><a href="/">Abrir Taitou</a></div>';
+                    return;
+                }
+
+                // Load categories & accounts
+                var [catsRes, accsRes] = await Promise.all([fetch('/api/categories'), fetch('/api/accounts')]);
+                categories = await catsRes.json();
+                accounts = await accsRes.json();
+                populateSelects();
+
+                // Handle ?type=income from shortcuts
+                var params = new URLSearchParams(window.location.search);
+                if (params.get('type') === 'income') setType('income');
+
+                document.getElementById('amount').focus();
+            } catch (e) {
+                showToast('Error de conexión', true);
+            }
+        })();
+
+        function setType(t) {
+            type = t;
+            document.querySelectorAll('.type-tab').forEach(function (btn) {
+                btn.classList.toggle('active', btn.dataset.type === t);
+            });
+            populateSelects();
+        }
+
+        function populateSelects() {
+            var catSel = document.getElementById('category');
+            catSel.innerHTML = '<option value="">Sin categoría</option>';
+            categories.filter(function (c) { return c.type === type; }).forEach(function (c) {
+                catSel.innerHTML += '<option value="' + c.id + '">' + c.icon + ' ' + c.name + '</option>';
+            });
+
+            var accSel = document.getElementById('account');
+            accSel.innerHTML = '';
+            accounts.forEach(function (a) {
+                accSel.innerHTML += '<option value="' + a.id + '">' + (a.icon || '🏦') + ' ' + a.name + '</option>';
+            });
+        }
+
+        async function save() {
+            var amount = parseFloat(document.getElementById('amount').value);
+            if (!amount || amount <= 0) { showToast('Introduce un monto', true); return; }
+
+            var btn = document.getElementById('saveBtn');
+            btn.disabled = true;
+            btn.textContent = 'Guardando...';
+
+            try {
+                var res = await fetch('/api/transactions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: type,
+                        amount: amount,
+                        description: document.getElementById('desc').value || null,
+                        category_id: document.getElementById('category').value || null,
+                        account_id: document.getElementById('account').value,
+                        date: new Date().toISOString().split('T')[0],
+                        notes: null
+                    })
+                });
+                var data = await res.json();
+                if (data.success) {
+                    document.getElementById('formCard').style.display = 'none';
+                    document.getElementById('successCard').style.display = '';
+                    document.getElementById('successMsg').textContent =
+                        (type === 'expense' ? 'Gasto' : 'Ingreso') + ' de €' + amount.toFixed(2);
+                } else {
+                    showToast(data.error || 'Error', true);
+                }
+            } catch (e) {
+                showToast('Error de conexión', true);
+            }
+            btn.disabled = false;
+            btn.textContent = 'Guardar';
+        }
+
+        function reset() {
+            document.getElementById('formCard').style.display = '';
+            document.getElementById('successCard').style.display = 'none';
+            document.getElementById('amount').value = '';
+            document.getElementById('desc').value = '';
+            document.getElementById('amount').focus();
+        }
+
+        function showToast(msg, isErr) {
+            var t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast show ' + (isErr ? 'toast-err' : 'toast-ok');
+            setTimeout(function () { t.className = 'toast'; }, 2500);
+        }
+    </script>
+</body>
+
+</html>

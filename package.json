@@ -1,0 +1,19 @@
+{
+  "name": "finance-tracker",
+  "version": "1.0.0",
+  "description": "Aplicación de control de finanzas personales",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.0.0",
+    "compression": "^1.8.1",
+    "dotenv": "^17.4.2",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "groq-sdk": "^1.1.2"
+  }
+}
